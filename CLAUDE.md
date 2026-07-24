@@ -61,9 +61,9 @@
 2. **版本号**: 上游如 0.2.111; 本地用 1.x 发行号. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 0.2.111)
+### 无冲突可直接吃进的上游能力 (示例 0.2.111 续)
 
-`/tutorial`, 按标题 `--resume`, Doctor TUI fix, privacy banner, 队列行编辑, voice 快捷键开关, toolOverrides, 工作区 relocation, durable scheduler 等. 与上表正交.
+leader 防重入, auth fail-closed, workflow 可恢复/overlay, auto mode 近期意图, plugin subagent 继承 MCP, web search 默认 grok-4.5, true-noop 停轮等. 与上表正交.
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)
 
