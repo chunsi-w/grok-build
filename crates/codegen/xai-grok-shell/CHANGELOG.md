@@ -1,5 +1,16 @@
 # Changelog
 
+# 1.8.0 — 2026-07-26
+
+## Features
+
+- **同步上游 monorepo 0.2.112** (`SOURCE_REV` 见 SOURCE_REV 文件): MCP 无效配置改为报告而非启动失败; SessionEnd hooks on /exit; hooks 可从 config 解析; Linux 提高 FD soft limit; 单任务 duration-only 详情; 工作区文件引用解析安全修复; acceptEdits 不再自动批准全局 hook 根目录写入; 网关断连保留终端输出等.
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号 0.2.112, SOURCE_REV 推进.
+
 # 1.7.0 — 2026-07-24
 
 ## Features
