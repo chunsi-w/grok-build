@@ -1,5 +1,16 @@
 # Changelog
 
+# 1.9.0 — 2026-07-27
+
+## Features
+
+- **同步上游 monorepo 0.2.112 续** (`SOURCE_REV` 见 SOURCE_REV 文件): UI 立即显示并后台拉 models/settings; 大 session 加载峰值内存受限; fork 流式 inherited replay 限内存; subagent lifecycle soak; herdr 多路复用检测; plan 审批 y 复制全文; 源标签终端版本 telemetry 等.
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号仍为 0.2.112, 仅 SOURCE_REV 推进.
+
 # 1.8.0 — 2026-07-26
 
 ## Features

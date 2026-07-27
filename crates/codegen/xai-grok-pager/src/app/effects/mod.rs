@@ -4223,10 +4223,11 @@ pub(crate) fn execute(
                                         .to_owned()
                                 });
                             xai_grok_shell::remote::fetch_settings_blocking(
-                                &proxy_base,
-                                &auth,
-                                None,
-                            )
+                                    &proxy_base,
+                                    &auth,
+                                    None,
+                                )
+                                .into_option()
                         })
                         .await
                         .ok()

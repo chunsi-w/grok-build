@@ -61,9 +61,9 @@
 2. **版本号**: 上游如 0.2.112; 本地用 1.x 发行号. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 0.2.112)
+### 无冲突可直接吃进的上游能力 (示例 0.2.112 续)
 
-MCP 无效配置报告而非启动失败, SessionEnd hooks on /exit 与 headless quit, hooks 可从 config 文件解析, Linux 提高 FD soft limit, 单任务 duration-only 详情, 工作区文件引用解析安全修复, acceptEdits 不自动批准全局 hook 根写入, 网关断连保留终端输出, 启动 HTTP client / session spawn 失败可恢复等. 与上表正交.
+UI 立即显示并后台拉 models/settings, 大 session 加载与 fork replay 峰值内存受限, subagent lifecycle soak, herdr 多路复用检测, plan 审批 y 复制全文, 源标签终端版本 telemetry, managed-deny smoke 策略在签名校验时不被误删等. 与上表正交.
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)
 
