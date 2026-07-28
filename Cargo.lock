@@ -13105,7 +13105,7 @@ dependencies = [
 
 [[package]]
 name = "xai-grok-pager"
-version = "1.9.0"
+version = "1.10.0"
 dependencies = [
  "agent-client-protocol",
  "ansi-to-tui",
@@ -13195,7 +13195,7 @@ dependencies = [
 
 [[package]]
 name = "xai-grok-pager-bin"
-version = "1.9.0"
+version = "1.10.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -13459,7 +13459,7 @@ dependencies = [
 
 [[package]]
 name = "xai-grok-shell"
-version = "1.9.0"
+version = "1.10.0"
 dependencies = [
  "agent-client-protocol",
  "anyhow",
@@ -13505,6 +13505,7 @@ dependencies = [
  "obfstr",
  "parking_lot",
  "portable-pty",
+ "pretty_assertions",
  "process-wrap",
  "prod-mc-cli-chat-proxy-types",
  "prost",
@@ -13754,6 +13755,7 @@ dependencies = [
  "command-fds",
  "crc32fast",
  "derive_more 2.1.1",
+ "dhat",
  "dirs 5.0.1",
  "dunce",
  "educe",
@@ -13772,6 +13774,7 @@ dependencies = [
  "nix 0.30.1",
  "parking_lot",
  "pdf_oxide",
+ "pretty_assertions",
  "pulldown-cmark",
  "quick-xml 0.38.3",
  "regex",
@@ -13806,6 +13809,7 @@ dependencies = [
  "xai-grok-config",
  "xai-grok-env",
  "xai-grok-sandbox",
+ "xai-grok-test-support",
  "xai-grok-tools-api",
  "xai-grok-version",
  "xai-grok-workspace-types",
@@ -13858,7 +13862,7 @@ dependencies = [
 
 [[package]]
 name = "xai-grok-version"
-version = "1.9.0"
+version = "1.10.0"
 dependencies = [
  "semver",
 ]

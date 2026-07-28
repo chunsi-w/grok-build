@@ -61,9 +61,9 @@
 2. **版本号**: 上游如 0.2.112; 本地用 1.x 发行号. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 0.2.112 续)
+### 无冲突可直接吃进的上游能力 (示例 0.2.112 续 2)
 
-UI 立即显示并后台拉 models/settings, 大 session 加载与 fork replay 峰值内存受限, subagent lifecycle soak, herdr 多路复用检测, plan 审批 y 复制全文, 源标签终端版本 telemetry, managed-deny smoke 策略在签名校验时不被误删等. 与上表正交.
+leader 工具执行套 sandbox, subagent 嵌套深度可配, /loop 可存终止 prompt, plan-mode exit 在 mixed batch 末尾, workspace task 快照只列未完成后台任务, soak 缺 metrics fail-closed, auth/LSP/config 告警降噪等. 与上表正交.
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)
 

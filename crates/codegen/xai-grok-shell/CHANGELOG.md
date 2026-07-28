@@ -1,5 +1,17 @@
 # Changelog
 
+# 1.10.0 — 2026-07-28
+
+## Features
+
+- **同步上游 monorepo 0.2.112 续** (`SOURCE_REV` 见 SOURCE_REV 文件): leader 进程套 sandbox 执行工具; subagent 最大嵌套深度可配; /loop 可存终止循环的 prompt; plan-mode exit 在 mixed batch 末尾执行; workspace task 快照只列未完成后台任务; soak 缺 metrics 失败关闭等.
+- **本地**: rules_engine 归一化 `mcp__server__tool` 工具名, 加强 hookify 全栈拦截单测.
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号仍为 0.2.112, 仅 SOURCE_REV 推进.
+
 # 1.9.0 — 2026-07-27
 
 ## Features
