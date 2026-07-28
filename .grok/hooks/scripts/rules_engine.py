@@ -592,8 +592,15 @@ def _normalize(data: Dict[str, Any], stage: str) -> Dict[str, Any]:
     if name in _TOOL_ALIAS:
         name = _TOOL_ALIAS[name]
     elif "__" in name and not name.startswith("mcp__"):
+        # Grok 线格式 server__tool → Claude 规则形 mcp__plugin_a_server__tool
         server, rest = name.split("__", 1)
         name = f"mcp__plugin_a_{server}__{rest}"
+    elif name.startswith("mcp__") and not name.startswith("mcp__plugin_a_"):
+        # 已带 mcp__ 但无 plugin_a: mcp__firecrawl__scrape → mcp__plugin_a_firecrawl__scrape
+        rest = name[len("mcp__") :]
+        if "__" in rest:
+            server, tool = rest.split("__", 1)
+            name = f"mcp__plugin_a_{server}__{tool}"
 
     raw = str(data.get("hookEventName") or data.get("hook_event_name") or stage)
     he_map = {

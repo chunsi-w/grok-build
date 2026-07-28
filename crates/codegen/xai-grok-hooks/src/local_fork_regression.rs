@@ -262,4 +262,226 @@ print("ok")
             String::from_utf8_lossy(&out.stderr)
         );
     }
+
+    /// 规则归一化: Grok 线格式 `server__tool` 必须能命中 Claude 形 `mcp__plugin_a_*` 规则.
+    /// 裸 `mcp__server__tool` (无 plugin_a) 旧逻辑会 miss — 回归钉住期望行为.
+    #[test]
+    fn rules_engine_normalizes_server_tool_and_mcp_prefixed_names() {
+        let script = repo_root().join(".grok/hooks/scripts/rules_engine.py");
+        let fixtures = repo_root().join(".grok/hooks/fixtures/rules");
+        let script_dir = script.parent().expect("dir").display().to_string();
+        let fixtures_s = fixtures.display().to_string();
+        let py = format!(
+            r#"
+import sys
+sys.path.insert(0, {script_dir:?})
+from rules_engine import load_rules_from_dirs, evaluate, _normalize
+from pathlib import Path
+rules = load_rules_from_dirs([Path({fixtures_s:?})])
+url = "https://github.com/xai-org/grok-build"
+# (toolName, toolInput, expect_deny)
+cases = [
+  ("firecrawl__scrape", {{"url": url}}, True),
+  ("mcp__plugin_a_firecrawl__scrape", {{"url": url}}, True),
+  ("mcp__firecrawl__scrape", {{"url": url}}, True),
+  ("run_terminal_command", {{"command": "curl https://github.com/x"}}, True),
+  ("run_terminal_command", {{"command": "gh api repos/xai-org/grok-build"}}, False),
+]
+for tool, tin, expect_deny in cases:
+    data = _normalize({{"toolName": tool, "toolInput": tin}}, "pre")
+    result = evaluate(rules, data)
+    denied = result.get("decision") == "deny"
+    assert denied == expect_deny, (tool, tin, data.get("tool_name"), result)
+print("ok")
+"#
+        );
+        let out = Command::new("python3")
+            .arg("-c")
+            .arg(py)
+            .output()
+            .expect("python normalize matrix");
+        assert!(
+            out.status.success(),
+            "normalize matrix failed: {}\n{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    /// 全栈: discovery 加载 project-rules 形 JSON → command 跑 rules_engine → dispatcher Deny.
+    /// 用临时 HOME 注入 fixture 规则, 不依赖本机 ~/.claude 内容.
+    #[tokio::test]
+    async fn dispatch_project_rules_style_blocks_github_via_scraper() {
+        use crate::discovery::load_hooks;
+        use crate::dispatcher::dispatch_pre_tool_use;
+        use crate::event::{HookEventEnvelope, HookEventName, HookPayload};
+        use crate::runner::RunContext;
+
+        let root = repo_root();
+        let script = root.join(".grok/hooks/scripts/rules_engine.py");
+        let fixtures = root.join(".grok/hooks/fixtures/rules");
+        assert!(script.is_file(), "missing rules_engine.py");
+        assert!(fixtures.is_dir(), "missing fixtures/rules");
+
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let home = tmp.path().join("home");
+        let claude = home.join(".claude");
+        std::fs::create_dir_all(&claude).expect("mkdir .claude");
+        // 把 fixture 规则拷进假 HOME (与生产 Path.home()/.claude 一致)
+        for entry in std::fs::read_dir(&fixtures).expect("read fixtures") {
+            let entry = entry.expect("entry");
+            let p = entry.path();
+            if p.extension().and_then(|e| e.to_str()) == Some("md") {
+                let name = p.file_name().expect("name");
+                std::fs::copy(&p, claude.join(name)).expect("copy rule");
+            }
+        }
+
+        let hooks_dir = tmp.path().join("hooks");
+        std::fs::create_dir_all(&hooks_dir).expect("mkdir hooks");
+        // HOME=... 使 rules_engine 的 Path.home() 指向 fixture
+        let cmd = format!(
+            "HOME={} python3 {} pre",
+            home.display(),
+            script.display()
+        );
+        let json = serde_json::json!({
+            "hooks": {
+                "PreToolUse": [{
+                    "hooks": [{
+                        "type": "command",
+                        "command": cmd,
+                        "timeout": 30
+                    }]
+                }]
+            }
+        });
+        std::fs::write(
+            hooks_dir.join("project-rules.json"),
+            serde_json::to_string_pretty(&json).expect("json"),
+        )
+        .expect("write hook json");
+
+        let (registry, errors) = load_hooks(Some(&hooks_dir), None);
+        assert!(
+            errors.is_empty(),
+            "hook load errors: {errors:?}"
+        );
+        assert!(
+            !registry.hooks_for(HookEventName::PreToolUse).is_empty(),
+            "PreToolUse hooks must load from project-rules.json"
+        );
+
+        let envelope = HookEventEnvelope {
+            hook_event_name: HookEventName::PreToolUse,
+            session_id: "test-session".into(),
+            cwd: tmp.path().to_string_lossy().into(),
+            workspace_root: tmp.path().to_string_lossy().into(),
+            timestamp: "2026-07-27T00:00:00Z".into(),
+            transcript_path: None,
+            client_identifier: None,
+            prompt_id: None,
+            permission_mode: None,
+            payload: HookPayload::PreToolUse {
+                tool_name: "firecrawl__scrape".into(),
+                tool_use_id: "call-1".into(),
+                tool_input: serde_json::json!({
+                    "url": "https://github.com/xai-org/grok-build"
+                }),
+                tool_input_truncated: false,
+                subagent_type: None,
+            },
+        };
+        let ctx = RunContext {
+            session_id: "test-session",
+            workspace_root: tmp.path().to_str().expect("utf8 path"),
+        };
+        let pre = dispatch_pre_tool_use(&registry, &envelope, &ctx).await;
+        match pre.decision {
+            HookDecision::Deny { reason, .. } => {
+                assert!(
+                    reason.contains("gh") || reason.contains("拦截") || reason.contains("github"),
+                    "deny reason should mention gh/拦截, got {reason}"
+                );
+            }
+            other => panic!(
+                "expected Deny from rules_engine via dispatcher, got {other:?}; results={:?}",
+                pre.results
+            ),
+        }
+    }
+
+    /// curl 访问 github 同样经全栈 deny (block-curl-github fixture).
+    #[tokio::test]
+    async fn dispatch_project_rules_style_blocks_curl_github() {
+        use crate::discovery::load_hooks;
+        use crate::dispatcher::dispatch_pre_tool_use;
+        use crate::event::{HookEventEnvelope, HookEventName, HookPayload};
+        use crate::runner::RunContext;
+
+        let root = repo_root();
+        let script = root.join(".grok/hooks/scripts/rules_engine.py");
+        let fixtures = root.join(".grok/hooks/fixtures/rules");
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let home = tmp.path().join("home");
+        let claude = home.join(".claude");
+        std::fs::create_dir_all(&claude).expect("mkdir");
+        for entry in std::fs::read_dir(&fixtures).expect("fixtures") {
+            let entry = entry.expect("e");
+            let p = entry.path();
+            if p.extension().and_then(|e| e.to_str()) == Some("md") {
+                std::fs::copy(&p, claude.join(p.file_name().expect("n"))).expect("cp");
+            }
+        }
+        let hooks_dir = tmp.path().join("hooks");
+        std::fs::create_dir_all(&hooks_dir).expect("hooks");
+        let cmd = format!("HOME={} python3 {} pre", home.display(), script.display());
+        let json = serde_json::json!({
+            "hooks": {
+                "PreToolUse": [{
+                    "hooks": [{"type": "command", "command": cmd, "timeout": 30}]
+                }]
+            }
+        });
+        std::fs::write(
+            hooks_dir.join("project-rules.json"),
+            serde_json::to_string(&json).expect("json"),
+        )
+        .expect("write");
+
+        let (registry, errors) = load_hooks(Some(&hooks_dir), None);
+        assert!(errors.is_empty(), "{errors:?}");
+
+        let envelope = HookEventEnvelope {
+            hook_event_name: HookEventName::PreToolUse,
+            session_id: "test-session".into(),
+            cwd: tmp.path().to_string_lossy().into(),
+            workspace_root: tmp.path().to_string_lossy().into(),
+            timestamp: "2026-07-27T00:00:00Z".into(),
+            transcript_path: None,
+            client_identifier: None,
+            prompt_id: None,
+            permission_mode: None,
+            payload: HookPayload::PreToolUse {
+                tool_name: "run_terminal_command".into(),
+                tool_use_id: "call-2".into(),
+                tool_input: serde_json::json!({
+                    "command": "curl https://github.com/xai-org/grok-build"
+                }),
+                tool_input_truncated: false,
+                subagent_type: None,
+            },
+        };
+        let ctx = RunContext {
+            session_id: "test-session",
+            workspace_root: tmp.path().to_str().expect("utf8"),
+        };
+        let pre = dispatch_pre_tool_use(&registry, &envelope, &ctx).await;
+        assert!(
+            pre.decision.is_deny(),
+            "curl+github must deny, got {:?}; results={:?}",
+            pre.decision,
+            pre.results
+        );
+    }
 }
