@@ -1,5 +1,16 @@
 # Changelog
 
+# 1.11.0 — 2026-07-30
+
+## Features
+
+- **同步上游 monorepo 0.2.114** (`SOURCE_REV` 见 SOURCE_REV 文件; 含 0.2.113): SuperGrok Plus 档位, MCP CLI enable/disable, doom-loop 默认恢复, /delete 删当前会话, 会话关闭回收 subagent/LSP/MCP/bash/hooks 子进程, Alacritty 双键规避, 启动线程不足不崩溃, access gate fail-open 防假 paywall, Agent Dashboard 用户指南等.
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号 0.2.114, SOURCE_REV 推进.
+
 # 1.10.0 — 2026-07-28
 
 ## Features

@@ -58,12 +58,12 @@
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
 
 1. **自动更新**: 上游启动可检查/可装; 本地发行启动路径硬关. 合入后复查 `auto_update.rs` 与 `main.rs` 门控是否仍短路.
-2. **版本号**: 上游如 0.2.112; 本地用 1.x 发行号. Changelog 可同时收录上游段落与本地 1.x 段落.
+2. **版本号**: 上游如 0.2.114; 本地用 1.x 发行号. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 0.2.112 续 2)
+### 无冲突可直接吃进的上游能力 (示例 0.2.114)
 
-leader 工具执行套 sandbox, subagent 嵌套深度可配, /loop 可存终止 prompt, plan-mode exit 在 mixed batch 末尾, workspace task 快照只列未完成后台任务, soak 缺 metrics fail-closed, auth/LSP/config 告警降噪等. 与上表正交.
+SuperGrok Plus 档位, MCP CLI enable/disable, doom-loop 默认恢复, /delete 删会话, 会话关闭回收子进程 (subagent/LSP/MCP/bash/hooks), Alacritty 双键规避, 启动线程不足不崩溃, access gate fail-open, 会话状态一次性 reclaim, 高核限制 workspace tokio workers 等. 与上表正交.
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)
 

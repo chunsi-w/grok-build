@@ -701,6 +701,7 @@ mod tests {
         let ctx = crate::runner::RunContext {
             session_id: "test",
             workspace_root: "/tmp",
+            process_scope: None,
         };
         let (result, _, info) = run_http_hook(&spec, &envelope, &ctx, GateKind::Tool).await;
 
@@ -779,6 +780,7 @@ mod tests {
         let ctx = crate::runner::RunContext {
             session_id: "test",
             workspace_root: "/tmp",
+            process_scope: None,
         };
 
         let (result, _, info) = run_http_hook(&spec, &envelope, &ctx, GateKind::Tool).await;
