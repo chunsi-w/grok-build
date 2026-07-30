@@ -1,5 +1,17 @@
 # Changelog
 
+# 1.12.0 — 2026-07-31
+
+## Features
+
+- **同步上游 monorepo 0.2.116** (`SOURCE_REV` 见 SOURCE_REV 文件; 含 0.2.115): headless 流式含 tool calls, `/undo` 别名 `/rewind`, 会话停止取消全部 subagent, 全屏长会话 resize 更轻, opt-in `GROK_EXTRA_CA_BUNDLE`, ACP session/list 与 task lifecycle 桥接, 外置 auth 隐藏 /usage 等.
+- **文档**: 上游同步发版 SOP + skill (`docs/sop-upstream-sync-release.md`).
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号 0.2.116, SOURCE_REV 推进.
+
 # 1.11.0 — 2026-07-30
 
 ## Features

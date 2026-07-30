@@ -193,7 +193,18 @@ python3 crates/codegen/xai-grok-hooks/examples/hooks/bin/chinese-punctuation-war
 
 ---
 
-## 5. 提交
+## 5. 合入路径: 优先 PR (推荐)
+
+PR 更标准的原因 (本仓也采用):
+
+- 大 diff (百级文件) 有 GitHub 审查面, 与 main 历史可追溯
+- CI 可在合并前跑 (若以后加 branch protection)
+- 回滚/对比用 PR URL, 比直接 push main 清晰
+- 与 GitHub 常规协作一致; 本仓维护者仍可 squash/merge 自合
+
+**仍允许** 紧急时 `ff-only` 直推 main (见 §5.2), 但默认走 PR.
+
+### 5.1 PR 路径 (默认)
 
 合并提交信息模板:
 
@@ -212,24 +223,54 @@ python3 crates/codegen/xai-grok-hooks/examples/hooks/bin/chinese-punctuation-war
 git add -A
 # 若仍在 merge 中:
 git commit   # 或 --amend 修正 WIP
+
+git push -u origin "sync/upstream-${UPSTREAM_LOCK}-${NEW_LOCAL}"
+
+gh pr create --repo phpmac/grok-build --base main --head "sync/upstream-${UPSTREAM_LOCK}-${NEW_LOCAL}"   --title "合并: 同步上游 monorepo 0.2.Z 并升至 1.X.Y"   --body "$(cat <<'EOF'
+## 摘要
+
+- 同步 upstream monorepo **0.2.Z** (`SOURCE_REV` ...)
+- 产品版本 **1.X.Y**
+- 本地设计门控已复查 (关更新 / soft-warn / 无 Sentry / language / local_ui)
+
+## 测试
+
+- [x] python rules_engine --self-test
+- [x] chinese-punctuation-warn --self-test
+- 完整 cargo 走 Release CI (本机不编)
+EOF
+)"
+
+# 自合 PR (维护者本人)
+gh pr merge --repo phpmac/grok-build --merge  # 或 --squash 若更偏好线性; 本仓历史常用 merge commit
+
+git checkout main
+git pull --ff-only origin main
+git log -3 --oneline
+```
+
+### 5.2 直推 main (仅紧急)
+
+```sh
 git checkout main
 git merge --ff-only "sync/upstream-${UPSTREAM_LOCK}-${NEW_LOCAL}"
-git log -3 --oneline
+git push origin main
 ```
 
 ---
 
-## 6. 推送 + tag + GitHub Release
+## 6. tag + GitHub Release (在 main 合入之后)
 
 `gh` 默认仓库可能指到 `xai-org/grok-build`, **必须** `--repo phpmac/grok-build`.
 
 ```sh
+# 前提: main 已含同步提交 (PR 已 merge 或 §5.2 已 push)
 NEW=1.X.Y
 TAG="v${NEW}"
 TITLE="同步上游 0.2.Z: <一句话中文主题>"   # 禁止 title 只写 v1.X.Y
 
-git push origin main
-git push -u origin "sync/upstream-${UPSTREAM_LOCK}-${NEW}"
+git checkout main
+git pull --ff-only origin main
 
 git tag -a "${TAG}" -m "${TAG}: 同步上游 monorepo 0.2.Z"
 git push origin "${TAG}"
@@ -312,8 +353,8 @@ git status   # clean
 - [ ] CHANGELOG + Claude.md 已更新
 - [ ] python 自检通过
 - [ ] merge commit 中文说明完整
-- [ ] push main + sync 分支 + annotated tag
-- [ ] `gh release create --repo phpmac/grok-build`
+- [ ] push sync 分支 + `gh pr create` + `gh pr merge`
+- [ ] main 已含合入; annotated tag + `gh release create --repo phpmac/grok-build`
 - [ ] CI 三平台 / assets 齐
 - [ ] 无残留 `target/`
 

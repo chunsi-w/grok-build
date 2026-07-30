@@ -19,14 +19,17 @@ description: 当用户要求 "同步上游", "合并上游", "拉上游发版", 
 4. **禁止本机 cargo** 与本地 tar.gz 正式产物
 5. `gh release create` 必须 `--repo phpmac/grok-build`
 
-## 最短执行序
+## 最短执行序 (默认 PR)
 
 ```
 fetch → (count HEAD..upstream/main?) → branch sync/upstream-*-1.x.y
 → merge → 门控复查 → 升 1.x + CHANGELOG + Claude.md
-→ python 自检 → commit → ff main → push → tag v* → gh release
+→ python 自检 → commit → push branch → gh pr create → gh pr merge
+→ main pull → tag v* → gh release --repo phpmac/grok-build
 → 看 CI assets
 ```
+
+优先 PR: 大 diff 可审, 历史可追溯, 更接近 GitHub 常规. 紧急可 §5.2 直推 main.
 
 ## 触发后行为
 
