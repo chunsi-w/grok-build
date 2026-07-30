@@ -39,6 +39,7 @@
 - Release 正文只写本次变更说明, 禁止列 assets 产物清单 (CI 上传什么用户自己看得到, 列出来是废话)
 - Release 不生成/不上传 `*.sha256` 校验文件, 多余
 - 本地发行版本与上游 monorepo 版本号分离: 本仓产品版本 (如 1.1.0) 独立递增; 上游锁步号与 `SOURCE_REV` 仅作同步记录
+- **可执行 SOP (同步上游 → 合并 → 发版)**: `docs/sop-upstream-sync-release.md`; skill 触发: `.grok/skills/upstream-sync-release/` (同步上游/合并发版 等)
 
 ## 上游同步 (设计保留)
 
