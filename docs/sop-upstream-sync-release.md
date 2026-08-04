@@ -87,6 +87,7 @@ git merge upstream/main -m "WIP merge"
 |------|------|
 | `crates/codegen/xai-grok-{pager,pager-bin,shell,version}/Cargo.toml` 的 `version` | **本地产品号** `${NEW_LOCAL}`, 不要上游 `0.2.x` |
 | `Cargo.lock` 中上述 4 个 package 的 `version` | 与 Cargo.toml 一致 = `${NEW_LOCAL}` |
+| `Cargo.lock` 中 telemetry 依赖段 (上游引入 sentry) | **逐行删 sentry, 保留相邻 rustls 等 dev-dep**; 禁整冲突块删空 (v1.14.0 曾误删 rustls 致 CI `--locked` 三平台全挂) |
 | `crates/codegen/xai-grok-shell/CHANGELOG.md` | 顶部写本地 `1.x` 段; 可保留上游 `0.2.x` 段在 `changelogs/` |
 | `SOURCE_REV` | 吃上游 (merge 通常已自动) |
 | soft-warn / auto_update / local_ui / 无 Sentry | **保留本地**, 见 §3 |
@@ -363,7 +364,7 @@ git status   # clean
 | 现象 | 处理 |
 |------|------|
 | `gh release create` 报 tag 不在 xai-org | 加 `--repo phpmac/grok-build` |
-| CI `cargo build --locked` 失败 | 查 Cargo.lock 本地 version / 是否误锁 sentry |
+| CI `cargo build --locked` 失败 | 查 Cargo.lock 本地 version / 是否误锁 sentry; **移除 lock 依赖逐行确认**: 冲突块内相邻行可能含合法依赖 (如 rustls 是 dev-dep), 禁整块删 |
 | 合并后启动又检查更新 | 复查 `should_check_for_updates` 与 auto_update noop |
 | 合并后有 sentry.rs | 按本地策略删模块 + 去 Cargo 依赖 + 清 lock |
 | 本机磁盘爆 | `rm -rf target`; 禁止再 cargo |
