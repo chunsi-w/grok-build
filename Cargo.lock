@@ -13875,7 +13875,7 @@ dependencies = [
  "prost",
  "rcgen",
  "reqwest 0.12.24",
-
+ "rustls",
  "serde",
  "serde_json",
  "strum 0.27.2",
