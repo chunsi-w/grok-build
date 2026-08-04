@@ -59,12 +59,12 @@
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
 
 1. **自动更新**: 上游启动可检查/可装; 本地发行启动路径硬关. 合入后复查 `auto_update.rs` 与 `main.rs` 门控是否仍短路.
-2. **版本号**: 上游如 0.2.117; 本地用 1.x 发行号. Changelog 可同时收录上游段落与本地 1.x 段落.
+2. **版本号**: 上游如 0.2.119; 本地用 1.x 发行号. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 0.2.117)
+### 无冲突可直接吃进的上游能力 (示例 0.2.119)
 
-会话资源一次 drop 释放, 压缩跨轮保留后台 task/subagent, 后台 subagent 完成提醒, 仪表盘可删会话, [stop] 取消 in-flight 压缩, `.grok/sandbox.toml` 写保护, history/search 进 cheatsheet, auth-retry 预算对 fail-closed 401 不计费等. 与上表正交.
+移除项目目录选择器, 外置 auth 登录当全新登录, 跳过嵌套 checkout 文件监视防 worktree 卡启动, 遥测统计 skill 读取, 可点击 ▲ 跳顶, plan 预览 Mermaid 按钮, 权限 always-allow 自由 glob, external auth 过期走 sign-in, vendor-compat MCP kill switch 生效, auto-mode 放行只读 git, 后台任务完成消息封顶, plan 滚动条边列可点, rust-toolchain 1.93.0 等. 与上表正交.
 
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)

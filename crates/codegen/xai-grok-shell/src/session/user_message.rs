@@ -19,7 +19,7 @@ pub fn user_query(user_message: String) -> String {
 /// When `None`, values are read from the local machine. When `Some`,
 /// the provided values are used (e.g. from a remote workspace via
 /// `workspace.info` RPC).
-pub struct UserInfoOverride {
+pub(crate) struct UserInfoOverride {
     pub os: String,
     pub shell: String,
     pub cwd: String,
@@ -94,7 +94,7 @@ fn resolve_shell_display() -> String {
     }
 }
 
-pub fn format_vcs_status_block(status: &str, vcs_kind: VcsKind) -> String {
+pub(crate) fn format_vcs_status_block(status: &str, vcs_kind: VcsKind) -> String {
     let (tag, description) = if vcs_kind.is_jj() {
         (
             "jj_status",
@@ -114,7 +114,7 @@ pub fn format_vcs_status_block(status: &str, vcs_kind: VcsKind) -> String {
 }
 
 /// Compute the VCS status block (without the `<user_info>` wrapper).
-pub async fn compute_vcs_status_block(
+pub(crate) async fn compute_vcs_status_block(
     working_directory: &Path,
     vcs_kind: VcsKind,
 ) -> Option<String> {

@@ -1,5 +1,16 @@
 # Changelog
 
+# 1.14.0 — 2026-08-04
+
+## Features
+
+- **同步上游 monorepo 0.2.119** (`SOURCE_REV` 见 SOURCE_REV 文件): 移除项目目录选择器; 外置 auth 把登录当全新登录而非刷新; 跳过嵌套 checkout 文件监视防止 worktree 卡启动; 遥测统计模型侧 skill 读取; 可点击 ▲ 跳到回答顶部; plan 预览显示 Mermaid 按钮; 权限 "always allow" 支持自由 glob 模式编辑; external auth 过期凭证正确走 sign-in 流程而非 401 死循环; vendor-compat MCP kill switch 真正生效; 自动模式放行更多只读 git 命令; 后台任务完成消息不再无限增长; plan 滚动条可点边列; rust-toolchain 升 1.93.0 等.
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号 0.2.119, SOURCE_REV 推进.
+
 # 1.13.0 — 2026-07-31
 
 ## Features
