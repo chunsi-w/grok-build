@@ -650,7 +650,8 @@ impl SessionActor {
                 tool_call_id.clone(),
                 duration_ms,
             );
-            let mut post_tool_use_result: Option<serde_json::Value> = None;
+            // post_tool_use_result 已删除: fork 的 PostToolUse dispatch 在上方内联完成
+            // (soft-warn 在 drain 前跑), 上游 post-loop 的二次 dispatch 已弃用以避免双重触发.
             if let Some((server, _)) =
                 crate::session::mcp_servers::parse_mcp_tool_name(&prepared.tool_name)
                 && server.starts_with(crate::session::managed_mcp::MANAGED_MCP_PREFIX)
@@ -746,12 +747,6 @@ impl SessionActor {
                         }
                     }
                     let drained = DrainedToolSuccess::new(tool_result);
-                    post_tool_use_result = self
-                        .hook_event_active(xai_grok_hooks::event::HookEventName::PostToolUse)
-                        .then(|| {
-                            serde_json::to_value(drained.output())
-                                .unwrap_or(serde_json::Value::Null)
-                        });
                     let followups = self
                         .handle_bridge_tool_success(
                             &prepared.tool_call_id,
