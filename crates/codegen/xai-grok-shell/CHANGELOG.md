@@ -1,5 +1,16 @@
 # Changelog
 
+# 1.15.0 — 2026-08-06
+
+## Features
+
+- **同步上游 monorepo 0.2.120** (`SOURCE_REV` 4d6d1137): Cloudflare 52x/5xx sampling 错误自动重试, 非 200 API 错误显示为 TUI banner; sandbox 新增 provision plan/durable metadata/repos manifest 类型; ACP session/resume 与 session/close; 在输出截断前提取 MCP 工具图片 (tool layer images); workflow 每轮子代理上限 16; dashboard 大量改进 (队列上下移 / markdown 表格重排 / SSH 与 tmux 主题检测 / 磁盘满提示 / resume 搜索修复 等); auth token 后缀处理修复; errno 跨 signal 回调保留.
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn+hookify / language / 去 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号 0.2.120, SOURCE_REV 推进.
+
 # 1.14.0 — 2026-08-04
 
 ## Features
