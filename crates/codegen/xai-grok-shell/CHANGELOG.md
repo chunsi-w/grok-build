@@ -1,5 +1,14 @@
 # Changelog
 
+# 1.15.2 — 2026-08-06
+
+## Features
+
+- **提示词明文化**: 系统提示词模板从 XOR 混淆改为 `include_str!` 直接加载, `templates/*.md` 成唯一真源; 删除 `prompt_encrypted.rs` + `encrypt_templates.py`.
+- **输出风格简化**: `prompt.md` `<output_efficiency>` 删 "technical blog post" 风格, 改 "be brief and direct".
+- **来源强制**: `prompt.md` 新增 `<source_citation>`, 事实/技术结论/版本号必须带链接或文件路径.
+- **锁工作目录**: `prompt.md` `<action_safety>` 加禁止操作工作目录外文件.
+
 # 1.15.1 — 2026-08-06
 
 ## Bug Fixes

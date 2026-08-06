@@ -54,6 +54,10 @@
 | Tasks 面板位置 | `views/agent.rs` 布局: scrollback 下, prompt 上 | 不跟上游若改回顶部 |
 | 会话标题左对齐 | `prompt_widget` 顶边 title | 不跟上游若改回右对齐 |
 | 移除 Sentry | telemetry 无 sentry 接入 | 不恢复错误上报 SDK |
+| 提示词明文化 | `template.rs` `include_str!` 替代 XOR decrypt; 删 `prompt_encrypted.rs` + `encrypt_templates.py` | `templates/*.md` 成唯一真源; 不跟上游若恢复混淆 |
+| 输出风格简化 | `prompt.md` `<output_efficiency>` | 删 "technical blog post" 风格, 改 "be brief and direct"; 不跟上游若改回 |
+| 来源强制 | `prompt.md` `<source_citation>` | 事实/技术结论/版本号必须带链接或文件路径; 不跟上游若删除 |
+| 锁工作目录 | `prompt.md` `<action_safety>` 末尾 | 禁止操作工作目录外文件; 不跟上游若删除 |
 | Release CI / README / 本文件 | `.github/workflows/release.yml` 等 | 官方无对等文件时保持本地 |
 
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
