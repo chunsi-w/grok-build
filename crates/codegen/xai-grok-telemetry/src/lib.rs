@@ -27,6 +27,7 @@ pub(crate) mod redact_common;
 pub mod sampling_log;
 pub mod session_ctx;
 pub mod session_metrics;
+pub mod startup;
 pub mod unified_log;
 
 pub use client::{

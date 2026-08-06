@@ -1,5 +1,18 @@
 # Changelog
 
+# 1.15.3 — 2026-08-06
+
+## Features
+
+- **同步上游 monorepo 0.2.121** (`SOURCE_REV` 796754a8): grok du 显示 ~/.grok 磁盘用量; 会话搜索索引不再锁; 启动慢时显示卡在哪个阶段; /rewind 对话回滚; colliding skills 可调用; post-kill reap 限时防 D-state 卡死; 子代理并发数统计; Auto decision 遥测; full-jitter 重连退避; 去掉 Beta 标签; Voice/Finance 工具卡片等.
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn+hookify / language / 去 Sentry / 提示词明文化+输出风格简化+来源强制 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号 0.2.121, SOURCE_REV 推进.
+
+# 0.2.119 — 2026-08-02
+
 # 1.15.2 — 2026-08-06
 
 ## Features
