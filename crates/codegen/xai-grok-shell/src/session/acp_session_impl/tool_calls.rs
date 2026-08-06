@@ -703,11 +703,12 @@ impl SessionActor {
                         .clone()
                         .or_else(|| prepared.dispatch_target_name.clone())
                         .unwrap_or_else(|| prepared.tool_name.clone());
-                    // PostToolUse 在写 tool_result 之前跑: soft-warn 才能并入模型可见文本
-                    // (原先 fire-and-forget, rules_engine 审计输出被整段丢弃).
+                    // 先 drain 图片: PostToolUse hook 用 drained.output() 才不会被
+                    // base64 图片占满 truncate 预算; soft-warn 仍在 bridge 写入前跑.
+                    let drained = DrainedToolSuccess::new(tool_result);
                     let mut merged_hook_ctx = prepared.pre_tool_hook_context.clone();
                     if self.hook_event_active(xai_grok_hooks::event::HookEventName::PostToolUse) {
-                        let tool_result_value = serde_json::to_value(&tool_result.output)
+                        let tool_result_value = serde_json::to_value(drained.output())
                             .unwrap_or(serde_json::Value::Null);
                         let raw_input: serde_json::Value =
                             serde_json::from_str(&prepared.raw_arguments)
@@ -746,7 +747,6 @@ impl SessionActor {
                             });
                         }
                     }
-                    let drained = DrainedToolSuccess::new(tool_result);
                     let followups = self
                         .handle_bridge_tool_success(
                             &prepared.tool_call_id,
