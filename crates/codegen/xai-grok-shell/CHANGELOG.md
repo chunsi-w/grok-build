@@ -1,5 +1,12 @@
 # Changelog
 
+# 1.15.1 — 2026-08-06
+
+## Bug Fixes
+
+- **PostToolUse hook 死存储**: 删除 tool_calls.rs 中 post_tool_use_result 残留的声明与赋值 (fork 弃用上游 post-loop 二次 dispatch 避免双重触发后, 残留赋值变成死代码).
+- **PostToolUse hook 图片截断**: DrainedToolSuccess::new 移到 hook dispatch 之前, 序列化改用 drained.output() (图片已 drain); 对 MCP 截图/ReadFile 图片等工具, hook 不再只看到被截断的 base64 而看不到结构化文本.
+
 # 1.15.0 — 2026-08-06
 
 ## Features
