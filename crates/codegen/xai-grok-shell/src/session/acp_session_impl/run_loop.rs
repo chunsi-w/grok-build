@@ -52,7 +52,7 @@ async fn fire_session_end_hooks(session: &SessionActor, reason: &str) {
         )
         .await;
         session
-            .send_hook_execution("session_end", None, None, &results)
+            .send_hook_execution("session_end", None, None, &results.results)
             .await;
     }
     session.dispatch_session_end_stop(reason).await;
