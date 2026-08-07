@@ -69,12 +69,12 @@
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
 
 1. **自动更新**: 上游启动可检查/可装; 本地发行启动路径硬关. 合入后复查 `auto_update.rs` 与 `main.rs` 门控是否仍短路.
-2. **版本号**: 上游如 0.2.120; 本地用 1.x 发行号. Changelog 可同时收录上游段落与本地 1.x 段落.
+2. **版本号**: 上游如 1.0.0; 本地产品号继续 1.15.x 独立递增. Changelog 可同时收录上游段落与本地 1.15.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 0.2.120)
+### 无冲突可直接吃进的上游能力 (示例 1.0.0)
 
-Cloudflare 52x/5xx sampling 重试, 非 200 API 错误 TUI banner, sandbox provision plan/metadata/repos manifest, ACP session/resume 与 close, 截断前提取 MCP 工具图片, workflow 子代理每轮上限 16, dashboard 队列上下移/markdown 表格重排/SSH-tmux 主题检测/磁盘满提示, auth token 后缀修复, errno 跨 signal 回调保留 等. 与上表正交.
+usage/session-info/context 分页模态, 会话 recap 跟会话语言, memory 轨迹进 session trace 导出, git status 防 spam, Windows 下载名 Grok Setup.exe 等. 与上表正交.
 
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)

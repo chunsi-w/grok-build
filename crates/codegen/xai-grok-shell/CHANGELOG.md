@@ -1,5 +1,17 @@
 # Changelog
 
+# 1.15.8 — 2026-08-08
+
+## Features
+
+- **同步上游 monorepo 1.0.0** (`SOURCE_REV` 3e620a76): usage/session-info/context 分页模态; 会话 recap 跟会话语言; memory 轨迹进 session trace 导出; git status 防 spam; Windows 下载名 Grok Setup.exe 等.
+- **多任务不丢项** (`prompt.md` `<multi_task>`): 用户列多项须全做完或明示未完成, 禁只做第一项后默默停下.
+- 本地设计保留不变 (关自动更新 / soft-warn / 提示词定制 / 无 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.15.x; 上游锁步号现为 1.0.0, SOURCE_REV 推进.
+
 # 1.15.7 — 2026-08-07
 
 ## Features
