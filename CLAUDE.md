@@ -58,6 +58,10 @@
 | 输出风格简化 | `prompt.md` `<output_efficiency>` | 删 "technical blog post" 风格, 改 "be brief and direct"; 不跟上游若改回 |
 | 来源强制 | `prompt.md` `<source_citation>` | 事实/技术结论/版本号必须带链接或文件路径; 不跟上游若删除 |
 | 锁工作目录 | `prompt.md` `<action_safety>` 末尾 | 禁止操作工作目录外文件; 不跟上游若删除 |
+| Hook 强制遵守 | `prompt.md` `<hooks_compliance>` | 任意 Hooks 插件的 block/soft-warn 均为硬规则, 禁写死插件名, 禁止忽略; 不跟上游若删除 |
+| 同类问题自查 | `prompt.md` `<similar_issues>` | 修一处后主动搜同类, 只汇报并询问, 禁擅自全改除非用户明确要求; 不跟上游若删除 |
+| 协作边界 | `prompt.md` `<collaboration>` + action_safety | 用户做主/禁乱改用户代码/根因未立不修/禁宣称全解决; 禁装依赖与改系统底层; 不跟上游若删除 |
+| 领域预习 | `prompt.md` `<domain_prep>` | 非琐碎领域工作先读项目角色职能, 领域任务先联网/文档调研再写码; 不跟上游若删除 |
 | Release CI / README / 本文件 | `.github/workflows/release.yml` 等 | 官方无对等文件时保持本地 |
 
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
