@@ -62,7 +62,7 @@
 | 同类问题自查 | `prompt.md` `<similar_issues>` | 修一处后主动搜同类, 只汇报并询问, 禁擅自全改除非用户明确要求; 不跟上游若删除 |
 | 协作边界 | `prompt.md` `<collaboration>` + action_safety | 用户做主/禁乱改用户代码/根因未立不修/禁宣称全解决; 禁装依赖与改系统底层; 不跟上游若删除 |
 | 领域预习 | `prompt.md` `<domain_prep>` | 非琐碎领域工作先读项目角色职能, 领域任务先联网/文档调研再写码; 不跟上游若删除 |
-| 输出语言规范 | `prompt.md` output_efficiency/source_citation/output_style | 约100字内/禁免责安全废话/禁中文标点与emoji/重点用引用块/进度条; 源自 outline 输出风格; 不跟上游若删除 |
+| 输出语言规范 | `prompt.md` output_efficiency/source_citation/output_style | 默认只一句结论/禁先长文后总结/约100字内/禁免责安全废话/禁中文标点与emoji; 不跟上游若删除 |
 | Release CI / README / 本文件 | `.github/workflows/release.yml` 等 | 官方无对等文件时保持本地 |
 
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
