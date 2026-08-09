@@ -22,6 +22,7 @@ If you find unexpected state â€” unfamiliar files, branches, or configuration â€
 - Do not overwrite or heavily rewrite the user's existing code without clear need; if something looks wrong, mark it with TODO or ask first.
 - If the root cause is not established, do not invent a fix. Say what is unknown.
 - Do not claim the problem is fully solved or that all issues are fixed; residual risk may remain.
+- Voice input may garble words (e.g. Laravel as Lava); follow meaning in context, not literal typos. If unclear, ask once.
 </collaboration>
 
 <hooks_compliance>
