@@ -650,44 +650,8 @@ impl SessionActor {
                 tool_call_id.clone(),
                 duration_ms,
             );
-            // post_tool_use_result 已删除: fork 的 PostToolUse dispatch 在 drain 前内联完成
-            // (soft-warn); 上游 post-loop 二次 dispatch 弃用避免双重触发.
-            if let Some((server, _)) =
-                crate::session::mcp_servers::parse_mcp_tool_name(&prepared.tool_name)
-                && server.starts_with(crate::session::managed_mcp::MANAGED_MCP_PREFIX)
-            {
-                let auth_rejected = match &result {
-                    Err(err) => xai_grok_mcp::servers::is_auth_rejection_message(&err.to_string()),
-                    Ok(tool_result) => {
-                        tool_result.output.is_error()
-                            && xai_grok_mcp::servers::is_auth_rejection_message(
-                                &tool_result.prompt_text,
-                            )
-                    }
-                };
-                if auth_rejected && self.reactive_managed_reauth(&server).await.is_ok() {
-                    let retry_start = std::time::Instant::now();
-                    let retry_span = tool_execution_span(
-                        &tracing::Span::current(),
-                        &self.session_info.id.0,
-                        &prepared,
-                        &tool_call_id,
-                        true,
-                    );
-                    let retry_span_for_record = retry_span.clone();
-                    result = dispatch_tool(&self.workspace_ops, &prepared, &self.session_info.id.0)
-                        .instrument(retry_span)
-                        .await;
-                    duration_ms =
-                        duration_ms.saturating_add(retry_start.elapsed().as_millis() as u64);
-                    record_tool_span_outcome(retry_span_for_record, &result);
-                    self.events.tool_started(
-                        prepared.tool_name.clone(),
-                        tool_call_id.clone(),
-                        duration_ms,
-                    );
-                }
-            }
+            // post_tool_use_result 已删除: PostToolUse soft-warn 在 drain 前内联;
+            // 上游已移除 managed MCP reactive reauth 与 post-loop 二次 dispatch.
             let tool_result_size_bytes = match &result {
                 Ok(tool_result) => tool_result.prompt_text.len() as i64,
                 Err(_) => 0,

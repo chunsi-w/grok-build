@@ -1,5 +1,12 @@
 # Changelog
 
+# 1.15.10 — 2026-08-11
+
+## Bug Fixes
+
+- **CI 编译**: 移除已失效的 managed MCP reactive reauth 残留 (上游已删 MANAGED_MCP_PREFIX/reactive_managed_reauth), 保留 PostToolUse soft-warn 内联.
+
+
 # 1.15.9 — 2026-08-11
 
 ## Features
