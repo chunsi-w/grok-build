@@ -72,9 +72,9 @@
 2. **版本号**: 上游如 1.0.0; 本地产品号继续 1.15.x 独立递增. Changelog 可同时收录上游段落与本地 1.15.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 1.0.0)
+### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV a51a1dc6)
 
-usage/session-info/context 分页模态, 会话 recap 跟会话语言, memory 轨迹进 session trace 导出, git status 防 spam, Windows 下载名 Grok Setup.exe 等. 与上表正交.
+mid-turn 提醒完成前序工作, /rename 增强, 本地 /resume 加速, 独立 worktree 标记, goal 模式 Send Now, 子代理删除前 drain, textarea Home/End 折行, untracked 进 git diff stats 等. 与上表正交.
 
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)

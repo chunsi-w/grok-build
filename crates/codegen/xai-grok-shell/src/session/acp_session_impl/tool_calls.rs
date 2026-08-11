@@ -630,7 +630,7 @@ impl SessionActor {
             .in_current_span(),
         );
         let _drainer_guard = crate::util::AbortOnDrop(drainer);
-        while let Some((idx, mut result, mut duration_ms)) = dispatch_rx.recv().await {
+        while let Some((idx, result, duration_ms)) = dispatch_rx.recv().await {
             let prepared = approved_slots[idx]
                 .take()
                 .expect("dispatch index should match an approved slot exactly once");
@@ -650,8 +650,8 @@ impl SessionActor {
                 tool_call_id.clone(),
                 duration_ms,
             );
-            // post_tool_use_result 已删除: fork 的 PostToolUse dispatch 在上方内联完成
-            // (soft-warn 在 drain 前跑), 上游 post-loop 的二次 dispatch 已弃用以避免双重触发.
+            // post_tool_use_result 已删除: fork 的 PostToolUse dispatch 在 drain 前内联完成
+            // (soft-warn); 上游 post-loop 二次 dispatch 弃用避免双重触发.
             if let Some((server, _)) =
                 crate::session::mcp_servers::parse_mcp_tool_name(&prepared.tool_name)
                 && server.starts_with(crate::session::managed_mcp::MANAGED_MCP_PREFIX)
@@ -954,12 +954,6 @@ impl SessionActor {
         }
         let mcp_parts = parse_mcp_tool_name(&call.function.name);
         let is_mcp_tool = mcp_parts.is_some();
-        if let Some((ref server, _)) = mcp_parts
-            && server.starts_with(crate::session::managed_mcp::MANAGED_MCP_PREFIX)
-        {
-            let _span = tracing::info_span!("tool.refresh_managed_mcp").entered();
-            self.refresh_managed_mcp_if_stale().await;
-        }
         if is_mcp_tool && !self.mcp_state.lock().await.is_initialized() {
             match self.mcp_strategy.get() {
                 McpInitStrategy::Blocking => {

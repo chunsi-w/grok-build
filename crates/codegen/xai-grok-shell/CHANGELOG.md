@@ -1,5 +1,18 @@
 # Changelog
 
+# 1.15.9 — 2026-08-11
+
+## Features
+
+- **同步上游 monorepo** (`SOURCE_REV` a51a1dc6): mid-turn 提醒完成前序工作; /rename 增强; 本地 /resume 加速; 独立 worktree 标记; Send Now 在 goal 模式可用; 子代理删除前 drain; 等.
+- **语音按语义**: collaboration 补充 ASR 错别字按上下文理解 (Laravel/Lava).
+- 本地设计保留: 关更新 / soft-warn 内联 / 明文提示词 / multi_task / 无 Sentry / suppress changelog.
+
+## Notes
+
+- 产品版本 1.15.9; 上游锁步仍 1.0.0 系列, SOURCE_REV 推进.
+
+
 # 1.15.8 — 2026-08-08
 
 ## Features
