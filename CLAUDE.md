@@ -62,7 +62,8 @@
 | 同类问题自查 | `prompt.md` `<similar_issues>` | 修一处后主动搜同类, 只汇报并询问, 禁擅自全改除非用户明确要求; 不跟上游若删除 |
 | 协作边界 | `prompt.md` `<collaboration>` + action_safety | 用户做主/禁乱改; 语音按语义; 禁装依赖改系统; 不跟上游若删除 |
 | 领域预习 | `prompt.md` `<domain_prep>` | 非琐碎领域工作先读项目角色职能, 领域任务先联网/文档调研再写码; 不跟上游若删除 |
-| 输出语言规范 | `prompt.md` output_efficiency/source_citation/output_style | 默认只一句结论/禁先长文后总结/约100字内/禁免责安全废话/禁中文标点与emoji; 不跟上游若删除 |
+| 输出语言规范 | `prompt.md` response_guidelines/source_citation/output_style | 默认只结论/禁先长文后总结/约100字/禁免责; 并入全局 CLAUDE 纪律; 不跟上游 blog 风格 |
+| 全局规则并入 | `prompt.md` mindset/code_discipline 等 | 来自 skills 全局 CLAUDE 的硬纪律英文化; 不跟上游若删除 |
 | 多任务不丢项 | `prompt.md` `<multi_task>` | 用户列多项须全做完或明示未完成, 禁只做第一项; 不跟上游若删除 |
 | Release CI / README / 本文件 | `.github/workflows/release.yml` 等 | 官方无对等文件时保持本地 |
 

@@ -1,5 +1,12 @@
 # Changelog
 
+# 1.15.11 — 2026-08-12
+
+## Features
+
+- **同步上游** (`SOURCE_REV` 5d08d7e4): Presence; Automations 卡片; worktree 收窄; Apple Terminal Cmd+click; 上游 work_policy 与 response_guidelines 结构.
+- **系统提示词并入全局 CLAUDE 规则**: mindset/code_discipline; 更严 output; 线上写操作需确认; 与本地 hooks/multi_task/similar/domain 等一并保留.
+
 # 1.15.10 — 2026-08-11
 
 ## Bug Fixes
