@@ -1,5 +1,12 @@
 # Changelog
 
+# 1.15.12 — 2026-08-12
+
+## Bug Fixes
+
+- **CI 编译**: 本地 auto_update noop 签名补齐 `_trigger: CliUpdateTrigger` (上游已 4 参调用).
+
+
 # 1.15.11 — 2026-08-12
 
 ## Features

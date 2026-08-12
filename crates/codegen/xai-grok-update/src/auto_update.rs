@@ -733,6 +733,7 @@ mod auto_update_disabled_tests {
 pub async fn run_update_if_available(
     _run_mode: UpdateRunMode,
     _interactive: bool,
+    _trigger: CliUpdateTrigger,
     _update_config: &UpdateConfig,
 ) -> Result<bool> {
     Ok(false)
