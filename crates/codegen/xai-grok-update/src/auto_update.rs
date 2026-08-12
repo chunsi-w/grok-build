@@ -691,7 +691,9 @@ async fn check_update_background_impl(update_config: &UpdateConfig) -> Backgroun
 
 #[cfg(test)]
 mod auto_update_disabled_tests {
-    use super::{UpdateRunMode, check_update_background, run_update_if_available};
+    use super::{
+        CliUpdateTrigger, UpdateRunMode, check_update_background, run_update_if_available,
+    };
     use crate::version::UpdateConfig;
 
     fn test_update_config() -> UpdateConfig {
@@ -717,6 +719,7 @@ mod auto_update_disabled_tests {
         let ran = run_update_if_available(
             UpdateRunMode::NonBlocking,
             false,
+            CliUpdateTrigger::AutoBackground,
             &test_update_config(),
         )
         .await
