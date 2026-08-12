@@ -1,5 +1,15 @@
 # Changelog
 
+# 1.15.13 — 2026-08-12
+
+## Features
+
+- **系统提示词**: `output_efficiency` 对齐全局短输出纪律; 新增 `project_docs` (CLAUDE 角色职能 vs README).
+
+## Bug Fixes
+
+- **CI 测试**: auto_update noop 单元测试补齐 `CliUpdateTrigger` 参数.
+
 # 1.15.12 — 2026-08-12
 
 ## Bug Fixes
