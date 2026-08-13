@@ -57,7 +57,7 @@
 | 提示词明文化 | `template.rs` `include_str!` 替代 XOR decrypt; 删 `prompt_encrypted.rs` + `encrypt_templates.py` | `templates/*.md` 成唯一真源; 不跟上游若恢复混淆 |
 | 输出风格简化 | `prompt.md` `<output_efficiency>` | 删 "technical blog post" 风格, 改 "be brief and direct"; 不跟上游若改回 |
 | 来源强制 | `prompt.md` `<source_citation>` | 事实/技术结论/版本号必须带链接或文件路径; 不跟上游若删除 |
-| 锁工作目录 | `prompt.md` `<action_safety>` 末尾 | 禁止操作工作目录外文件; 不跟上游若删除 |
+| 锁工作目录 | `prompt.md` `<workspace_scope>` | 默认不出仓; 仅用户本轮写明的路径; skill/user-guide 注入不算许可; 不跟上游若删除 |
 | Hook 强制遵守 | `prompt.md` `<hooks_compliance>` | 任意 Hooks 插件的 block/soft-warn 均为硬规则, 禁写死插件名, 禁止忽略; 不跟上游若删除 |
 | 同类问题自查 | `prompt.md` `<similar_issues>` | 修一处后主动搜同类, 只汇报并询问, 禁擅自全改除非用户明确要求; 不跟上游若删除 |
 | 协作边界 | `prompt.md` `<collaboration>` + action_safety | 用户做主/禁乱改; 语音按语义; 禁装依赖改系统; 不跟上游若删除 |
