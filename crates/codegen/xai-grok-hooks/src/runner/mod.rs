@@ -56,9 +56,12 @@ pub(crate) struct GateHookSpecificOutputJson {
 /// is an error so typos surface instead of failing open.
 ///
 /// `allow` + non-empty reason/context => soft-warn allow (tool still runs).
+/// `fallback_reason` supplies the deny message when the JSON carries none
+/// (command hooks pass the first stderr line; HTTP hooks pass `None`).
 pub(crate) fn gate_json_to_decision(
     json: GateHookJson,
     hook_name: &str,
+    fallback_reason: Option<&str>,
 ) -> Result<HookDecision, String> {
     // Prefer full flexible parse when body was already JSON-shaped via decision_parse.
     // This struct path stays for serde of simple GateHookJson.
@@ -86,7 +89,9 @@ pub(crate) fn gate_json_to_decision(
         || matches!(permission, Some("deny") | Some("block"));
     if is_hard_deny {
         return Ok(HookDecision::Deny {
-            reason: ctx.unwrap_or_else(|| format!("denied by hook '{hook_name}'")),
+            reason: ctx
+                .or_else(|| fallback_reason.map(str::to_string))
+                .unwrap_or_else(|| format!("denied by hook '{hook_name}'")),
             hook_name: hook_name.to_string(),
         });
     }

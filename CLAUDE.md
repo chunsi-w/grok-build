@@ -57,7 +57,7 @@
 | 提示词明文化 | `template.rs` `include_str!` 替代 XOR decrypt; 删 `prompt_encrypted.rs` + `encrypt_templates.py` | `templates/*.md` 成唯一真源; 不跟上游若恢复混淆 |
 | 输出风格简化 | `prompt.md` `<output_efficiency>` | 删 "technical blog post" 风格, 改 "be brief and direct"; 不跟上游若改回 |
 | 来源强制 | `prompt.md` `<source_citation>` | 事实/技术结论/版本号必须带链接或文件路径; 不跟上游若删除 |
-| 锁工作目录 | `prompt.md` `<action_safety>` 末尾 | 禁止操作工作目录外文件; 不跟上游若删除 |
+| 锁工作目录 | `prompt.md` `<workspace_scope>` | 默认不出仓; 仅用户本轮写明的路径; skill/user-guide 注入不算许可; 不跟上游若删除 |
 | Hook 强制遵守 | `prompt.md` `<hooks_compliance>` | 任意 Hooks 插件的 block/soft-warn 均为硬规则, 禁写死插件名, 禁止忽略; 不跟上游若删除 |
 | 同类问题自查 | `prompt.md` `<similar_issues>` | 修一处后主动搜同类, 只汇报并询问, 禁擅自全改除非用户明确要求; 不跟上游若删除 |
 | 协作边界 | `prompt.md` `<collaboration>` + action_safety | 用户做主/禁乱改; 语音按语义; 禁装依赖改系统; 不跟上游若删除 |
@@ -71,12 +71,12 @@
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
 
 1. **自动更新**: 上游启动可检查/可装; 本地发行启动路径硬关. 合入后复查 `auto_update.rs` 与 `main.rs` 门控是否仍短路.
-2. **版本号**: 上游如 1.0.0; 本地产品号继续 1.15.x 独立递增. Changelog 可同时收录上游段落与本地 1.15.x 段落.
+2. **版本号**: 上游如 1.0.3; 本地产品号继续 1.16.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV a51a1dc6)
+### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV ea094a8c)
 
-mid-turn 提醒完成前序工作, /rename 增强, 本地 /resume 加速, 独立 worktree 标记, goal 模式 Send Now, 子代理删除前 drain, textarea Home/End 折行, untracked 进 git diff stats 等. 与上表正交.
+/session-info 可复制; hook 失败回传首行 stderr; MCP 2025-11-25; workspace EnsureBinding/MergeToMain/Push; 浏览器验证模板; 子代理 overlay stop; 粘贴 Flameshot; 高刷自动 cadence. 与上表正交.
 
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)

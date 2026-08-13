@@ -138,10 +138,14 @@ pub async fn dispatch_pre_tool_use(
                 });
             }
             HookRunnerResult::Failed(err) => {
+                // `hook_failure` (not `error`) on purpose: failure detail can
+                // carry hook-authored stderr text, and `error` is on the OTEL
+                // export allowlist. Remote traces keep their failure signal
+                // via the text-free HookExecuted telemetry event.
                 tracing::warn!(
                     hook_name = %spec.name,
                     elapsed_ms = elapsed.as_millis() as u64,
-                    error = %err,
+                    hook_failure = %err,
                     "hook failed; ignoring (fail-open)"
                 );
                 run_results.push(HookRunResult::Failed {
@@ -342,10 +346,12 @@ pub async fn dispatch_stop(
                 );
             }
             HookRunnerResult::Failed(err) => {
+                // `hook_failure`, not the exported `error` key (see the
+                // pre_tool_use arm).
                 tracing::warn!(
                     hook_name = %spec.name,
                     elapsed_ms = elapsed.as_millis() as u64,
-                    error = %err,
+                    hook_failure = %err,
                     "stop hook failed; ignoring (fail-open)"
                 );
                 out.results.push(HookRunResult::Failed {
@@ -437,10 +443,12 @@ pub async fn dispatch_non_blocking(
                 });
             }
             HookRunnerResult::Failed(err) => {
+                // `hook_failure`, not the exported `error` key (see the
+                // pre_tool_use arm).
                 tracing::warn!(
                     hook_name = %spec.name,
                     elapsed_ms = elapsed.as_millis() as u64,
-                    error = %err,
+                    hook_failure = %err,
                     "hook failed"
                 );
                 results.push(HookRunResult::Failed {
