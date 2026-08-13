@@ -1,5 +1,13 @@
 # Changelog
 
+# 1.16.0 — 2026-08-13
+
+## Features
+
+- **同步上游 monorepo 1.0.3** (`SOURCE_REV` ea094a8c): /session-info 可复制; hook 失败回传首行 stderr; MCP 2025-11-25; workspace EnsureBinding/MergeToMain/Push; 浏览器验证进提示词; 子代理 stop; 粘贴截图等.
+- **workspace_scope**: 仅用户本轮写明的路径可出仓; skill/user-guide 注入不算许可.
+- 本地设计保留 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry / 明文提示词).
+
 # 1.15.13 — 2026-08-12
 
 ## Features
