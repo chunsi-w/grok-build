@@ -23,19 +23,27 @@ pub struct RunContext<'a> {
 /// Result of running a single hook (any handler type).
 #[derive(Debug)]
 pub enum HookRunnerResult {
-    Decision(HookDecision),
+    Allow {
+        additional_context: Option<String>,
+        updated_input: Option<serde_json::Value>,
+    },
+    Deny {
+        reason: String,
+        hook_name: String,
+    },
     Stop(StopHookOutcome),
     Success,
     /// Failed: the caller fails open.
     Failed(String),
 }
 
-/// JSON from `PreToolUse` gate hooks:
-/// `{"decision": "allow" | "deny", "reason": "…"}` plus optional soft-warn
-/// fields (`reason` / Claude `hookSpecificOutput.additionalContext`).
+/// JSON emitted by a `PreToolUse` gate hook. Every field is optional: `decision`
+/// carries the allow/deny verdict, `reason` its message, and
+/// `hookSpecificOutput.updatedInput` an optional rewrite of the tool input.
 #[derive(Debug, Deserialize)]
 pub(crate) struct GateHookJson {
-    pub decision: String,
+    #[serde(default)]
+    pub decision: Option<String>,
     #[serde(default)]
     pub reason: Option<String>,
     #[serde(default, rename = "hookSpecificOutput")]
@@ -44,27 +52,44 @@ pub(crate) struct GateHookJson {
     pub system_message: Option<String>,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct GateHookSpecificOutputJson {
+    #[serde(default, rename = "updatedInput")]
+    pub updated_input: Option<serde_json::Value>,
     #[serde(default, rename = "additionalContext")]
     pub additional_context: Option<String>,
     #[serde(default, rename = "permissionDecision")]
     pub permission_decision: Option<String>,
 }
 
+impl GateHookJson {
+    /// True only when the payload carries a `decision` or `hookSpecificOutput`;
+    /// a stray JSON log line is not a gate document and must not read as allow.
+    fn is_gate_document(&self) -> bool {
+        self.decision.is_some() || self.hook_specific_output.is_some()
+    }
+
+    fn updated_input(&self, hook_name: &str) -> Option<serde_json::Value> {
+        let value = self.hook_specific_output.as_ref()?.updated_input.as_ref()?;
+        if value.is_object() {
+            return Some(value.clone());
+        }
+        tracing::warn!(hook_name, "ignoring non-object `updatedInput` from hook");
+        None
+    }
+}
+
 /// Interpret a [`GateHookJson`] as a [`HookDecision`]. An unknown decision value
 /// is an error so typos surface instead of failing open.
 ///
-/// `allow` + non-empty reason/context => soft-warn allow (tool still runs).
 /// `fallback_reason` supplies the deny message when the JSON carries none
-/// (command hooks pass the first stderr line; HTTP hooks pass `None`).
+/// (command hooks pass the first stderr line — the hook's feedback channel;
+/// HTTP hooks have no stderr and pass `None`).
 pub(crate) fn gate_json_to_decision(
-    json: GateHookJson,
+    json: &GateHookJson,
     hook_name: &str,
     fallback_reason: Option<&str>,
 ) -> Result<HookDecision, String> {
-    // Prefer full flexible parse when body was already JSON-shaped via decision_parse.
-    // This struct path stays for serde of simple GateHookJson.
     let permission = json
         .hook_specific_output
         .as_ref()
@@ -84,8 +109,8 @@ pub(crate) fn gate_json_to_decision(
     .find(|s| !s.is_empty())
     .map(str::to_string);
 
-    let decision = json.decision.trim();
-    let is_hard_deny = matches!(decision, "deny" | "block")
+    let decision = json.decision.as_deref().map(str::trim);
+    let is_hard_deny = matches!(decision, Some("deny") | Some("block"))
         || matches!(permission, Some("deny") | Some("block"));
     if is_hard_deny {
         return Ok(HookDecision::Deny {
@@ -96,11 +121,11 @@ pub(crate) fn gate_json_to_decision(
         });
     }
     match decision {
-        "allow" | "continue" | "approve" => Ok(match ctx {
+        Some("allow") | Some("continue") | Some("approve") | None => Ok(match ctx {
             Some(c) => HookDecision::allow_with_context(c),
             None => HookDecision::allow(),
         }),
-        other => Err(format!(
+        Some(other) => Err(format!(
             "unknown decision value '{other}' from hook '{hook_name}'"
         )),
     }

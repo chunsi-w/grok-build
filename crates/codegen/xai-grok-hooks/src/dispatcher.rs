@@ -34,10 +34,17 @@ fn eligible_or_record_skip(
     crate::matcher::matcher_allows(spec.matcher.as_ref(), match_value)
 }
 
+/// A tool-input rewrite tagged with the hook that produced it.
+pub struct InputRewrite {
+    pub hook_name: String,
+    pub input: serde_json::Value,
+}
+
 /// Result of a `pre_tool_use` dispatch: the final decision plus per-hook
 /// execution details (for scrollback enrichment).
 pub struct PreToolUseResult {
     pub decision: HookDecision,
+    pub updated_input: Option<InputRewrite>,
     pub results: Vec<HookRunResult>,
 }
 
@@ -66,6 +73,7 @@ pub async fn dispatch_pre_tool_use(
     if hooks.is_empty() {
         return PreToolUseResult {
             decision: HookDecision::allow(),
+            updated_input: None,
             results: Vec::new(),
         };
     }
@@ -76,6 +84,7 @@ pub async fn dispatch_pre_tool_use(
     let match_value = envelope.payload.match_value().map(str::to_string);
     let mut run_results = Vec::new();
     let mut warn_contexts: Vec<String> = Vec::new();
+    let mut updated_input: Option<InputRewrite> = None;
 
     for spec in hooks {
         if !eligible_or_record_skip(spec, match_value.as_deref(), &mut run_results) {
@@ -93,7 +102,7 @@ pub async fn dispatch_pre_tool_use(
             runner::run_hook(spec, envelope, ctx, GateKind::Tool).await;
 
         match result {
-            HookRunnerResult::Decision(HookDecision::Deny { reason, .. }) => {
+            HookRunnerResult::Deny { reason, .. } => {
                 tracing::info!(
                     hook_name = %spec.name,
                     elapsed_ms = elapsed.as_millis() as u64,
@@ -112,15 +121,20 @@ pub async fn dispatch_pre_tool_use(
                         reason,
                         hook_name: spec.name.clone(),
                     },
+                    updated_input: None,
                     results: run_results,
                 };
             }
-            HookRunnerResult::Decision(HookDecision::Allow { additional_context }) => {
+            HookRunnerResult::Allow {
+                additional_context,
+                updated_input: hook_updated_input,
+            } => {
                 if let Some(ref ctx) = additional_context {
                     tracing::info!(
                         hook_name = %spec.name,
                         elapsed_ms = elapsed.as_millis() as u64,
                         context_len = ctx.len(),
+                        updated_input = hook_updated_input.is_some(),
                         "hook allowed with soft-warn context"
                     );
                     warn_contexts.push(ctx.clone());
@@ -128,8 +142,15 @@ pub async fn dispatch_pre_tool_use(
                     tracing::info!(
                         hook_name = %spec.name,
                         elapsed_ms = elapsed.as_millis() as u64,
+                        updated_input = hook_updated_input.is_some(),
                         "hook allowed"
                     );
+                }
+                if let Some(input) = hook_updated_input {
+                    updated_input = Some(InputRewrite {
+                        hook_name: spec.name.clone(),
+                        input,
+                    });
                 }
                 run_results.push(HookRunResult::Success {
                     hook_name: spec.name.clone(),
@@ -178,6 +199,7 @@ pub async fn dispatch_pre_tool_use(
     };
     PreToolUseResult {
         decision,
+        updated_input,
         results: run_results,
     }
 }
@@ -361,7 +383,9 @@ pub async fn dispatch_stop(
                     http_info,
                 });
             }
-            HookRunnerResult::Success | HookRunnerResult::Decision(_) => {
+            HookRunnerResult::Success
+            | HookRunnerResult::Allow { .. }
+            | HookRunnerResult::Deny { .. } => {
                 out.results.push(HookRunResult::Success {
                     hook_name: spec.name.clone(),
                     elapsed,
@@ -458,16 +482,28 @@ pub async fn dispatch_non_blocking(
                     http_info,
                 });
             }
-            HookRunnerResult::Decision(decision) => {
-                if let Some(ctx_text) = decision.additional_context() {
-                    warn_contexts.push(ctx_text.to_string());
-                } else if let HookDecision::Deny { reason, .. } = &decision {
-                    warn_contexts.push(reason.clone());
+            HookRunnerResult::Allow {
+                additional_context, ..
+            } => {
+                if let Some(ctx_text) = additional_context {
+                    warn_contexts.push(ctx_text);
                 }
                 tracing::info!(
                     hook_name = %spec.name,
                     elapsed_ms = elapsed.as_millis() as u64,
-                    has_context = decision.additional_context().is_some() || decision.is_deny(),
+                    "hook completed (soft decision on non-blocking event)"
+                );
+                results.push(HookRunResult::Success {
+                    hook_name: spec.name.clone(),
+                    elapsed,
+                    http_info,
+                });
+            }
+            HookRunnerResult::Deny { reason, .. } => {
+                warn_contexts.push(reason);
+                tracing::info!(
+                    hook_name = %spec.name,
+                    elapsed_ms = elapsed.as_millis() as u64,
                     "hook completed (soft decision on non-blocking event)"
                 );
                 results.push(HookRunResult::Success {
@@ -674,6 +710,33 @@ mod tests {
         let envelope = pre_tool_use_envelope("run_terminal_cmd");
         let result = dispatch_pre_tool_use(&registry, &envelope, &run_ctx()).await;
         assert_eq!(result.decision, HookDecision::allow());
+    }
+
+    #[tokio::test]
+    async fn pre_tool_use_carries_last_updated_input() {
+        let first = make_command_spec(
+            "first",
+            Some("run_terminal_cmd"),
+            true,
+            "echo '{\"hookSpecificOutput\":{\"updatedInput\":{\"command\":\"one\"}}}'",
+        );
+        let second = make_command_spec(
+            "second",
+            Some("run_terminal_cmd"),
+            true,
+            "echo '{\"hookSpecificOutput\":{\"updatedInput\":{\"command\":\"two\"}}}'",
+        );
+        let registry = registry_from_specs(vec![first, second]);
+        let result = dispatch_pre_tool_use(
+            &registry,
+            &pre_tool_use_envelope("run_terminal_cmd"),
+            &run_ctx(),
+        )
+        .await;
+        assert_eq!(result.decision, HookDecision::allow());
+        let rewrite = result.updated_input.expect("updatedInput carried");
+        assert_eq!(rewrite.input["command"], "two");
+        assert_eq!(rewrite.hook_name, "second");
     }
 
     #[tokio::test]
@@ -1178,6 +1241,7 @@ mod tests {
             (HookEventName::SessionEnd, "hook.session_end"),
             (HookEventName::Stop, "hook.stop"),
             (HookEventName::StopFailure, "hook.stop_failure"),
+            (HookEventName::StopCancelled, "hook.stop_cancelled"),
             (HookEventName::PostToolUse, "hook.post_tool_use"),
             (
                 HookEventName::PostToolUseFailure,
@@ -1201,6 +1265,7 @@ mod tests {
                 | HookEventName::SessionEnd
                 | HookEventName::Stop
                 | HookEventName::StopFailure
+                | HookEventName::StopCancelled
                 | HookEventName::PreToolUse
                 | HookEventName::PostToolUse
                 | HookEventName::PostToolUseFailure
@@ -1211,7 +1276,7 @@ mod tests {
                 | HookEventName::SubagentStop
                 | HookEventName::SubagentEnd
                 | HookEventName::PreCompact
-                | HookEventName::PostCompact => 15,
+                | HookEventName::PostCompact => 16,
             }
         };
         assert_eq!(
