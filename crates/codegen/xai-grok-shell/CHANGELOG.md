@@ -1,6 +1,15 @@
 # Changelog
 
+# 1.17.0 — 2026-08-18
+
+## Features
+
+- **同步上游 monorepo 1.0.5** (`SOURCE_REV` c2dab005): worktree GC; GROK_CONFIG; consent notice; hooks updatedInput; grok-4.6 默认; 会话标题早刷新; web_search 域名过滤.
+- 本地设计保留 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry / 明文提示词 / workspace_scope).
+- hooks: 保留 soft-warn, 并吃进上游 `updatedInput`.
+
 # 1.16.0 — 2026-08-13
+
 
 ## Features
 

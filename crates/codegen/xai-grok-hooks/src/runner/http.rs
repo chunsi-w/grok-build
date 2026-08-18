@@ -247,37 +247,9 @@ pub async fn run_http_hook(
     );
 
     if mode == GateKind::Observe {
-        let response_text = match response.text().await {
-            Ok(body) => body,
-            Err(e) => {
-                return (
-                    HookRunnerResult::Failed(format!(
-                        "failed to read response body for {}: {}",
-                        log_url,
-                        e.without_url()
-                    )),
-                    elapsed,
-                    Some(make_info(Some(status_code), None)),
-                );
-            }
-        };
-        let http_info = Some(make_info(
-            Some(status_code),
-            if response_text.trim().is_empty() {
-                None
-            } else {
-                Some(truncate_preview(&response_text))
-            },
-        ));
+        let http_info = Some(make_info(Some(status_code), None));
         if status.is_success() {
-            match crate::decision_parse::parse_hook_json(&response_text, &spec.name) {
-                crate::decision_parse::ParseHookJson::Decision(decision)
-                    if decision.additional_context().is_some() || decision.is_deny() =>
-                {
-                    return (HookRunnerResult::Decision(decision), elapsed, http_info);
-                }
-                _ => return (HookRunnerResult::Success, elapsed, http_info),
-            }
+            return (HookRunnerResult::Success, elapsed, http_info);
         }
         return (
             HookRunnerResult::Failed(format!("HTTP status {}", status)),
@@ -358,34 +330,47 @@ fn parse_http_blocking_result(
 ) -> HookRunnerResult {
     if response_text.trim().is_empty() {
         if status.is_success() {
-            return HookRunnerResult::Decision(HookDecision::Allow { additional_context: None });
+            return HookRunnerResult::Allow {
+                additional_context: None,
+                updated_input: None,
+            };
         }
-        return HookRunnerResult::Failed(format!("HTTP status {} with empty body", status));
+        return HookRunnerResult::Failed(format!("HTTP status {status} with empty body"));
     }
 
     match serde_json::from_str::<super::GateHookJson>(response_text) {
         // HTTP hooks have no stderr channel, so there is no fallback reason.
-        Ok(output) => {
-            match super::gate_json_to_decision(output, hook_name, /* fallback_reason */ None) {
-                Ok(decision) => HookRunnerResult::Decision(decision),
+        Ok(output) if output.is_gate_document() => {
+            match super::gate_json_to_decision(&output, hook_name, /* fallback_reason */ None) {
+                Ok(HookDecision::Deny { reason, hook_name }) => {
+                    HookRunnerResult::Deny { reason, hook_name }
+                }
+                Ok(HookDecision::Allow { additional_context }) => HookRunnerResult::Allow {
+                    additional_context,
+                    updated_input: output.updated_input(hook_name),
+                },
                 Err(err) => HookRunnerResult::Failed(err),
             }
         }
-        Err(e) => {
-            if status.is_success() {
-                tracing::warn!(
-                    hook_name = %hook_name,
-                    error = %e,
-                    "could not parse HTTP hook response JSON, treating as allow"
-                );
-                HookRunnerResult::Decision(HookDecision::Allow { additional_context: None })
-            } else {
-                HookRunnerResult::Failed(format!(
-                    "HTTP status {} and failed to parse response: {e}",
-                    status
-                ))
+        Ok(_) if status.is_success() => HookRunnerResult::Allow {
+            additional_context: None,
+            updated_input: None,
+        },
+        Err(e) if status.is_success() => {
+            tracing::warn!(
+                hook_name,
+                error = %e,
+                "could not parse HTTP hook response JSON, treating as allow"
+            );
+            HookRunnerResult::Allow {
+                additional_context: None,
+                updated_input: None,
             }
         }
+        Ok(_) => HookRunnerResult::Failed(format!("HTTP status {status} with non-decision body")),
+        Err(e) => HookRunnerResult::Failed(format!(
+            "HTTP status {status} and failed to parse response: {e}"
+        )),
     }
 }
 
@@ -417,10 +402,23 @@ mod tests {
     fn http_allow_json() {
         let result =
             parse_http_blocking_result(r#"{"decision":"allow"}"#, StatusCode::OK, "test-hook");
-        assert!(matches!(
-            result,
-            HookRunnerResult::Decision(HookDecision::Allow { additional_context: None })
-        ));
+        assert!(matches!(result, HookRunnerResult::Allow { .. }));
+    }
+
+    #[test]
+    fn http_updated_input() {
+        let result = parse_http_blocking_result(
+            r#"{"hookSpecificOutput":{"updatedInput":{"command":"echo hi"}}}"#,
+            StatusCode::OK,
+            "test-hook",
+        );
+        match result {
+            HookRunnerResult::Allow {
+                updated_input: Some(input),
+                ..
+            } => assert_eq!(input["command"], "echo hi"),
+            other => panic!("expected Allow with updatedInput, got {other:?}"),
+        }
     }
 
     #[test]
@@ -431,7 +429,7 @@ mod tests {
             "test-hook",
         );
         match result {
-            HookRunnerResult::Decision(HookDecision::Deny { reason, hook_name }) => {
+            HookRunnerResult::Deny { reason, hook_name } => {
                 assert_eq!(reason, "dangerous command");
                 assert_eq!(hook_name, "test-hook");
             }
@@ -444,7 +442,7 @@ mod tests {
         let result =
             parse_http_blocking_result(r#"{"decision":"deny"}"#, StatusCode::OK, "my-hook");
         match result {
-            HookRunnerResult::Decision(HookDecision::Deny { reason, .. }) => {
+            HookRunnerResult::Deny { reason, .. } => {
                 assert!(
                     reason.contains("my-hook"),
                     "reason should mention hook name"
@@ -452,6 +450,16 @@ mod tests {
             }
             other => panic!("expected Deny, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn http_non_gate_json_error_status_fails() {
+        let result = parse_http_blocking_result(
+            r#"{"detail":"Not Found"}"#,
+            StatusCode::NOT_FOUND,
+            "test-hook",
+        );
+        assert!(matches!(result, HookRunnerResult::Failed(_)));
     }
 
     #[test]
@@ -507,10 +515,7 @@ mod tests {
     fn http_empty_body_success_allows() {
         for body in ["", "   \n  "] {
             let result = parse_http_blocking_result(body, StatusCode::OK, "test-hook");
-            assert!(matches!(
-                result,
-                HookRunnerResult::Decision(HookDecision::Allow { additional_context: None })
-            ));
+            assert!(matches!(result, HookRunnerResult::Allow { .. }));
         }
     }
 
@@ -530,10 +535,7 @@ mod tests {
     fn http_invalid_json_success_status_fail_open() {
         for body in ["not json at all", r#"{"decision":"deny""#] {
             let result = parse_http_blocking_result(body, StatusCode::OK, "test-hook");
-            assert!(matches!(
-                result,
-                HookRunnerResult::Decision(HookDecision::Allow { additional_context: None })
-            ));
+            assert!(matches!(result, HookRunnerResult::Allow { .. }));
         }
     }
 
@@ -557,7 +559,7 @@ mod tests {
             "test-hook",
         );
         match result {
-            HookRunnerResult::Decision(HookDecision::Deny { reason, .. }) => {
+            HookRunnerResult::Deny { reason, .. } => {
                 assert_eq!(reason, "forbidden");
             }
             other => panic!("expected Deny, got {other:?}"),

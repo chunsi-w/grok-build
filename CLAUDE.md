@@ -71,12 +71,12 @@
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
 
 1. **自动更新**: 上游启动可检查/可装; 本地发行启动路径硬关. 合入后复查 `auto_update.rs` 与 `main.rs` 门控是否仍短路.
-2. **版本号**: 上游如 1.0.3; 本地产品号继续 1.16.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
+2. **版本号**: 上游如 1.0.5; 本地产品号继续 1.17.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV ea094a8c)
+### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV c2dab005)
 
-/session-info 可复制; hook 失败回传首行 stderr; MCP 2025-11-25; workspace EnsureBinding/MergeToMain/Push; 浏览器验证模板; 子代理 overlay stop; 粘贴 Flameshot; 高刷自动 cadence. 与上表正交.
+worktree GC; GROK_CONFIG; consent notice; hooks updatedInput; grok-4.6 默认; 会话标题早刷新; web_search 域名过滤; GROK_FORCE_LOGIN_TEAM_ID. 与上表正交.
 
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)
