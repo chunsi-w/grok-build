@@ -695,11 +695,9 @@ fn remove_worktree_from_disk(
     if let Some(reg_dir) = registration_dir
         && reg_dir.exists()
     {
-        // Defense in depth: this path is read from the worktree's own `.git`
-        // pointer, so only remove it when it actually looks like a git
-        // registration dir (`.git/worktrees/<name>`) — never an arbitrary
-        // directory a malformed or crafted pointer names.
-        if reg_dir.parent().and_then(|p| p.file_name()) == Some(std::ffi::OsStr::new("worktrees")) {
+        // 路径来自 worktree 自己的 `.git` 指针; 只删真正的 git 登记目录,
+        // 父目录名叫 worktrees 不够 (例如 `/tmp/worktrees/precious`).
+        if is_git_worktree_registration_dir(&reg_dir) {
             tracing::debug!(
                 registration_dir = %reg_dir.display(),
                 "removing worktree registration from .git/worktrees/"
@@ -896,6 +894,20 @@ fn read_worktree_gitdir(worktree_path: &std::path::Path) -> Option<std::path::Pa
     };
     // Canonicalize to clean up any `..` components
     dunce::canonicalize(&resolved).ok().or(Some(resolved))
+}
+
+/// 仅 `<repo>/.git/worktrees/<id>` 或 bare `<repo>.git/worktrees/<id>`.
+fn is_git_worktree_registration_dir(reg_dir: &std::path::Path) -> bool {
+    let Some(parent) = reg_dir.parent() else {
+        return false;
+    };
+    if parent.file_name() != Some(std::ffi::OsStr::new("worktrees")) {
+        return false;
+    }
+    let Some(name) = parent.parent().and_then(|p| p.file_name()) else {
+        return false;
+    };
+    name == std::ffi::OsStr::new(".git") || name.as_encoded_bytes().ends_with(b".git")
 }
 
 /// Delete `snapshot_path`, falling back to the delegate's `delete_snapshot`
@@ -1953,6 +1965,52 @@ mod tests {
         assert!(
             victim.join("keep.txt").exists(),
             "a pointer whose parent is not `worktrees` must not be removed"
+        );
+    }
+
+    #[test]
+    fn is_git_worktree_registration_dir_requires_git_grandparent() {
+        assert!(is_git_worktree_registration_dir(std::path::Path::new(
+            "/repo/.git/worktrees/wt1"
+        )));
+        assert!(is_git_worktree_registration_dir(std::path::Path::new(
+            "/repo.git/worktrees/wt1"
+        )));
+        assert!(!is_git_worktree_registration_dir(std::path::Path::new(
+            "/tmp/worktrees/precious"
+        )));
+        assert!(!is_git_worktree_registration_dir(std::path::Path::new(
+            "/tmp/precious"
+        )));
+        assert!(!is_git_worktree_registration_dir(std::path::Path::new(
+            "/repo/.git/not-worktrees/wt1"
+        )));
+    }
+
+    /// 父目录名叫 worktrees 不够: `/tmp/worktrees/precious` 不得被删.
+    #[test]
+    fn a_gitdir_pointer_under_bare_worktrees_dir_is_not_removed() {
+        #[cfg(feature = "metadata")]
+        let _fx = crate::db::GrokHomeFixture::new();
+
+        let tmp = tempfile::TempDir::new().unwrap();
+        let victim = tmp.path().join("worktrees").join("precious");
+        std::fs::create_dir_all(&victim).unwrap();
+        std::fs::write(victim.join("keep.txt"), b"do not delete").unwrap();
+
+        let wt = tmp.path().join("wt");
+        std::fs::create_dir_all(&wt).unwrap();
+        std::fs::write(wt.join(".git"), format!("gitdir: {}\n", victim.display())).unwrap();
+
+        remove_worktree(&wt).unwrap();
+
+        assert!(
+            !wt.exists(),
+            "the worktree directory itself is still removed"
+        );
+        assert!(
+            victim.join("keep.txt").exists(),
+            "/tmp/worktrees/precious-shaped pointer must not be removed"
         );
     }
 

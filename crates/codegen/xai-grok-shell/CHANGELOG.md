@@ -1,5 +1,11 @@
 # Changelog
 
+# 1.17.1 — 2026-08-19
+
+## Bug Fixes
+
+- **worktree 清理**: `gitdir` 登记目录必须是 `.git/worktrees/<id>` 或 `*.git/worktrees/<id>`, 不再因父目录名叫 worktrees 就 `remove_dir_all`.
+
 # 1.17.0 — 2026-08-18
 
 ## Features
