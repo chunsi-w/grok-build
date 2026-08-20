@@ -49,13 +49,13 @@
 |------|------|------|
 | 启动禁用官方自动更新 | `pager-bin` `should_check_for_updates` 恒 false; `auto_update::run_update_if_available` / background check 本地 noop | 启动不检查不下载; 手动 `grok update` 路径可另议 |
 | 启动 UI 精简 | `local_ui::{suppress_announcements,suppress_changelog,suppress_logo}` | 非 test 构建隐藏公告/changelog/点阵 logo |
-| Hook soft-warn / hookify | `xai-grok-hooks` decision_parse/dispatcher/result; PostToolUse 回传模型 | block 拦, warn 放行并让模型读到提示 |
+| Hook soft-warn / hookify | `decision_parse` / `dispatcher` / `result`; `runner/command.rs` Observe 解析 stdout JSON; PostToolUse 回传模型 + TUI HookAnnotation | block 拦, warn 放行并让模型/TUI 读到提示. 禁 Observe 直接 Success 丢 JSON |
 | `[ui].language` / `GROK_LANGUAGE` | shared ui_config + shell resolve/user_message/prompt | 沟通/标题/commit 等生成文案语言 |
 | Tasks 面板位置 | `views/agent.rs` 布局: scrollback 下, prompt 上 | 不跟上游若改回顶部 |
 | 会话标题左对齐 | `prompt_widget` 顶边 title | 不跟上游若改回右对齐 |
 | 移除 Sentry | telemetry 无 sentry 接入 | 不恢复错误上报 SDK |
 | 提示词明文化 | `template.rs` `include_str!` 替代 XOR decrypt; 删 `prompt_encrypted.rs` + `encrypt_templates.py` | `templates/*.md` 成唯一真源; 不跟上游若恢复混淆 |
-| 输出风格简化 | `prompt.md` `<output_efficiency>` | 删 "technical blog post" 风格, 改 "be brief and direct"; 不跟上游若改回 |
+| 输出风格简化 | `prompt.md` `<plain_speech>` + `<output_efficiency>` | 说人话最高优先级 (像同事口述, 禁套话腔调); 删 "technical blog post" 风格, 改 "be brief and direct"; 不跟上游若改回 |
 | 来源强制 | `prompt.md` `<source_citation>` | 事实/技术结论/版本号必须带链接或文件路径; 不跟上游若删除 |
 | 锁工作目录 | `prompt.md` `<workspace_scope>` | 默认不出仓; 仅用户本轮写明的路径; skill/user-guide 注入不算许可; 不跟上游若删除 |
 | Hook 强制遵守 | `prompt.md` `<hooks_compliance>` | 任意 Hooks 插件的 block/soft-warn 均为硬规则, 禁写死插件名, 禁止忽略; 不跟上游若删除 |
@@ -83,7 +83,7 @@ worktree GC; GROK_CONFIG; consent notice; hooks updatedInput; grok-4.6 默认; �
 
 防止官方 diff 冲掉 soft-warn / hookify / 启动门控. 合并 `upstream` 后靠 push/CI 覆盖下列用例, **禁止本机 `cargo test` 堆 target**:
 
-- `xai-grok-hooks`: `local_fork`, `soft_warn`, `parse_allow_with_reason`
+- `xai-grok-hooks`: `local_fork`, `soft_warn`, `parse_allow_with_reason`, `post_tool_use_observe_stdout_json`
 - `xai-grok-pager-bin`: `should_check_for_updates`
 - `xai-grok-pager`: `local_ui` (cfg(test) 下不 suppress)
 

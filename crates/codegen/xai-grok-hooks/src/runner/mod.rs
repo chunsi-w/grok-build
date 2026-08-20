@@ -10,8 +10,8 @@ use serde::Deserialize;
 use crate::result::{HookDecision, HttpInfo, StopHookOutcome};
 
 /// How a hook's output is interpreted, per the event's [`GateKind`]: `Observe`
-/// ignores output, `Tool` parses the allow/deny vocabulary, `Stop` the stop
-/// vocabulary.
+/// still parses soft-warn JSON (PostToolUse / hookify), `Tool` parses the
+/// allow/deny vocabulary, `Stop` the stop vocabulary.
 pub use crate::event::GateKind;
 
 pub struct RunContext<'a> {
