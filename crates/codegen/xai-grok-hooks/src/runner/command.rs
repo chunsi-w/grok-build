@@ -292,18 +292,10 @@ pub async fn run_command_hook(
             );
 
             match mode {
-                GateKind::Observe => {
-                    if exit_code == 0 {
-                        return (HookRunnerResult::Success, elapsed);
-                    }
-                    (
-                        HookRunnerResult::Failed(append_stderr_line(
-                            &format!("exit code {exit_code}"),
-                            &stderr,
-                        )),
-                        elapsed,
-                    )
-                }
+                GateKind::Observe => (
+                    parse_observe_result(&stdout, &stderr, exit_code, &spec.name),
+                    elapsed,
+                ),
                 GateKind::Tool => {
                     parse_blocking_result(&stdout, &stderr, exit_code, &spec.name, elapsed)
                 }
@@ -508,6 +500,37 @@ fn append_stderr_line(message: &str, stderr: &str) -> String {
     match stderr_first_line(stderr) {
         Some(line) => format!("{message}: {line}"),
         None => message.to_string(),
+    }
+}
+
+/// PostToolUse 等 Observe: exit 0 仍解析 soft-warn JSON, 否则审计 reason 被丢弃.
+fn parse_observe_result(
+    stdout: &str,
+    stderr: &str,
+    exit_code: i32,
+    hook_name: &str,
+) -> HookRunnerResult {
+    if exit_code != 0 {
+        return HookRunnerResult::Failed(append_stderr_line(
+            &format!("exit code {exit_code}"),
+            stderr,
+        ));
+    }
+    match crate::decision_parse::parse_hook_json(stdout, hook_name) {
+        crate::decision_parse::ParseHookJson::Decision(decision)
+            if decision.additional_context().is_some() || decision.is_deny() =>
+        {
+            match decision {
+                HookDecision::Deny { reason, hook_name } => {
+                    HookRunnerResult::Deny { reason, hook_name }
+                }
+                HookDecision::Allow { additional_context } => HookRunnerResult::Allow {
+                    additional_context,
+                    updated_input: None,
+                },
+            }
+        }
+        _ => HookRunnerResult::Success,
     }
 }
 
@@ -911,6 +934,71 @@ mod tests {
             ),
             other => panic!("expected Failed, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn observe_exit0_soft_warn_json_is_allow_with_context() {
+        let result = parse_observe_result(
+            r#"{"decision":"allow","reason":"[警告] **[warn-chinese-punctuation]**"}"#,
+            "",
+            0,
+            "hookify",
+        );
+        match result {
+            HookRunnerResult::Allow {
+                additional_context: Some(ctx),
+                updated_input: None,
+            } => assert!(
+                ctx.contains("warn-chinese-punctuation"),
+                "got {ctx}"
+            ),
+            other => panic!("expected Allow with context, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn observe_exit0_claude_additional_context_is_allow() {
+        let result = parse_observe_result(
+            r#"{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"hookify warn: prefer scrape"}}"#,
+            "",
+            0,
+            "hookify",
+        );
+        match result {
+            HookRunnerResult::Allow {
+                additional_context: Some(ctx),
+                ..
+            } => assert!(ctx.contains("prefer scrape"), "got {ctx}"),
+            other => panic!("expected Allow with context, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn observe_exit0_deny_json_is_deny_for_dispatcher_to_soften() {
+        let result = parse_observe_result(
+            r#"{"decision":"deny","reason":"[拦截] 访问github必须使用gh命令"}"#,
+            "",
+            0,
+            "hookify",
+        );
+        match result {
+            HookRunnerResult::Deny { reason, .. } => {
+                assert!(reason.contains("拦截") || reason.contains("gh"), "got {reason}");
+            }
+            other => panic!("expected Deny, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn observe_exit0_plain_allow_or_empty_is_success() {
+        assert!(matches!(
+            parse_observe_result(r#"{"decision":"allow"}"#, "", 0, "h"),
+            HookRunnerResult::Success
+        ));
+        assert!(matches!(
+            parse_observe_result("", "", 0, "h"),
+            HookRunnerResult::Success
+        ));
     }
 
     /// The observe path reports `exit code N: <first stderr line>` so the

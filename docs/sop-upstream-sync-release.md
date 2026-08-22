@@ -117,6 +117,9 @@ test -f crates/codegen/xai-grok-pager/src/local_ui.rs && \
 # soft-warn / hookify
 test -f crates/codegen/xai-grok-hooks/src/decision_parse.rs
 test -f crates/codegen/xai-grok-hooks/src/local_fork_regression.rs
+# Observe 必须解析 stdout JSON (1.17 曾被上游冲掉, TUI/模型都没提示)
+rg -n 'parse_observe_result' crates/codegen/xai-grok-hooks/src/runner/command.rs
+rg -n 'post_tool_use_observe_stdout_json' crates/codegen/xai-grok-hooks/src/local_fork_regression.rs
 
 # 无 Sentry
 test ! -f crates/codegen/xai-grok-telemetry/src/sentry.rs && echo no_sentry_file

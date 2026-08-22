@@ -484,4 +484,77 @@ print("ok")
             pre.results
         );
     }
+
+    /// 全栈: PostToolUse Observe 必须解析 allow+reason, 不得当 Success 丢掉.
+    /// 1.17 合上游曾把 command Observe 改成 exit 0 直接 Success, TUI/模型都看不到提示.
+    #[tokio::test]
+    async fn post_tool_use_observe_stdout_json_reaches_additional_context() {
+        use crate::config::HookSpec;
+        use crate::dispatcher::dispatch_non_blocking;
+        use crate::event::{HookEventEnvelope, HookEventName, HookPayload};
+        use crate::runner::RunContext;
+        use std::collections::HashMap;
+        use std::path::PathBuf;
+
+        let script = r#"echo '{"decision":"allow","reason":"[警告] **[warn-chinese-punctuation]**\n避免中文标点"}'"#;
+        let spec = HookSpec {
+            name: "hookify-punct".into(),
+            event: HookEventName::PostToolUse,
+            handler_type: crate::config::HandlerType::Command,
+            configured_matcher: None,
+            matcher: None,
+            enabled: true,
+            command: Some(PathBuf::from(script)),
+            command_raw: Some(script.to_string()),
+            url: None,
+            url_raw: None,
+            timeout_ms: 5000,
+            source_dir: PathBuf::from("/tmp"),
+            extra_env: HashMap::new(),
+            layer: crate::config::HookProvenance::File,
+        };
+        let (mut registry, _) = crate::discovery::load_hooks(None, None);
+        registry.append_specs(vec![spec]);
+        let envelope = HookEventEnvelope {
+            hook_event_name: HookEventName::PostToolUse,
+            session_id: "test-session".into(),
+            cwd: "/tmp".into(),
+            workspace_root: "/tmp".into(),
+            timestamp: "2026-07-27T00:00:00Z".into(),
+            transcript_path: None,
+            client_identifier: None,
+            prompt_id: None,
+            permission_mode: None,
+            payload: HookPayload::PostToolUse {
+                tool_name: "search_replace".into(),
+                tool_use_id: "call-1".into(),
+                tool_input: serde_json::json!({"file_path": "/tmp/t.md"}),
+                tool_result: serde_json::json!("ok"),
+                tool_input_truncated: false,
+                tool_result_truncated: false,
+                duration_ms: None,
+                is_backgrounded: false,
+                subagent_type: None,
+            },
+        };
+        let ctx = RunContext {
+            session_id: "test-session",
+            workspace_root: "/tmp",
+            process_scope: None,
+        };
+        let out = dispatch_non_blocking(
+            &registry,
+            HookEventName::PostToolUse,
+            &envelope,
+            &ctx,
+        )
+        .await;
+        let ctx_text = out
+            .additional_context
+            .expect("PostToolUse soft-warn must survive Observe");
+        assert!(
+            ctx_text.contains("中文标点") || ctx_text.contains("warn-chinese-punctuation"),
+            "got {ctx_text}"
+        );
+    }
 }

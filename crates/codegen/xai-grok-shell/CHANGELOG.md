@@ -1,5 +1,19 @@
 # Changelog
 
+# 1.17.2 — 2026-08-20
+
+## Bug Fixes
+
+- **hookify / PostToolUse 提示**: 恢复 Observe 路径解析 stdout JSON. 1.17.0 合上游把 exit 0 直接当 Success, hookify 红字拦截/警告和模型侧 `Hook warn:` 一起消失. 行为回到 1.16 / [ce49ea9](https://github.com/phpmac/grok-build/commit/ce49ea925c564f0cec6cabea47dd4521d75e3c3e).
+
+## Prompt
+
+- **说人话 `<plain_speech>`**: 新增最高优先级输出原则, 像同事当面口述: 直接, 具体, 有对象; 短 ≠ 人话, 禁开场客套/先表态再答/公文腔.
+- **`<mindset>` 补 3 轮规则**: 同一问题 3 轮没解决 = 方法本身错了, 停手换思路.
+- **`<code_discipline>` 补空壳禁令**: 文件没用了删文件并清引用, 禁清空内容留空壳.
+- **`<output_efficiency>` 补细则**: 未追问不展开; 有问题逐条列最前, 没问题一行带过; 禁闲聊客套.
+- **`<multi_task>` 补清单边界**: 清单只用于自己排活, 禁写进回复凑字.
+
 # 1.17.1 — 2026-08-19
 
 ## Bug Fixes
