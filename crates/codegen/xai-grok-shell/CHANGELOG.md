@@ -8,6 +8,10 @@
 - **worktree 登记守卫吃上游方案**: 形状 + `gitdir` 反向链接双校验, 覆盖本地 1.17.1 的同类修复 (sibling 登记不再误删).
 - **启动告警面板跟上游移除**: 终端告警只在 welcome 视图展示, agent 视图不再常驻 banner.
 
+## Prompt
+
+- **全局规则并入**: 补 `mindset` 隐患一句话点出不展开; `output_efficiency` 输出基线压过 skill/agent/command 格式, skill 只许加结构禁覆盖语气/篇幅/结论先行/重点加粗/有问题无问题分开.
+
 ## Notes
 
 - 本地设计保留不变: tasks 面板仍在 scrollback 下 prompt 上 (已移植到上游新 `AgentViewLayoutParams` 布局并补回归测试); 关自动更新 / soft-warn / language / 去 Sentry / 明文提示词等未动.
