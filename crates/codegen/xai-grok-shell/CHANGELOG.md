@@ -1,5 +1,57 @@
 # Changelog
 
+# 1.18.0 — 2026-08-23
+
+## Features
+
+- **同步上游 monorepo 1.0.6** (`SOURCE_REV` 7d67deac): 可选 status line 底栏; Shift+方向键扩选; `grok clone` 投影 worktree; permission "Never allow" (MCP 工具/web-fetch 域名); 模型切换时 compact; 定时循环可从后台任务托盘删除; mailto 链接渲染; 重复工具调用循环两档提前打断.
+- **worktree 登记守卫吃上游方案**: 形状 + `gitdir` 反向链接双校验, 覆盖本地 1.17.1 的同类修复 (sibling 登记不再误删).
+- **启动告警面板跟上游移除**: 终端告警只在 welcome 视图展示, agent 视图不再常驻 banner.
+
+## Notes
+
+- 本地设计保留不变: tasks 面板仍在 scrollback 下 prompt 上 (已移植到上游新 `AgentViewLayoutParams` 布局并补回归测试); 关自动更新 / soft-warn / language / 去 Sentry / 明文提示词等未动.
+- 产品版本继续走本地 1.x; 上游锁步号 1.0.6.
+
+# 1.0.6 — 2026-08-18
+
+## Breaking Changes
+
+- **Subagent spawning** no longer accepts capability_mode; tool access is now controlled only by agent type.
+
+## Features
+
+- **Shift+arrow keys** now extend text selections in the prompt like a standard text field.
+- **Optional status line** can now display live session info or script output at the bottom of the pager.
+- **grok clone** can now fetch a repo into a content store and mount a projected working tree.
+
+## Bug Fixes
+
+- **Subagents** no longer show multiple-choice questions; only the primary agent can ask them.
+- **Fixed session startup hangs** on large or unhealthy git repositories.
+- **Queued messages** during goals no longer starve, and editing queued prompts works reliably.
+- **Consent notice** on first launch now shows clickable links and handles keyboard/mouse correctly.
+- **Ctrl+C then edit** a prompt now correctly removes the original text from the conversation.
+- **Double-clicking** a terminal command result now shows the complete output instead of a preview.
+- **Consent notice links** are now stricter and more reliable on all terminals.
+- **Video generation** now surfaces a clear ZDR error instead of raw API responses when output storage is required.
+- **Project hooks** on Windows now correctly expand $CLAUDE_PROJECT_DIR when invoking PowerShell scripts.
+
+
+# 1.0.5 — 2026-08-15
+
+## Features
+
+- **GROK_CONFIG** and **GROK_CONFIG_PATH** environment variables now let launchers override selected config settings without editing config.toml.
+- **Worktrees** under ~/.grok/worktrees are now automatically reclaimed when safe, with strong safeguards that never delete a user's last copy.
+- **Hook policy blocks** now correctly report "Turn blocked by a hook" instead of "Turn cancelled by user."
+- **Image and video generation** now limits how many calls the model can request in one step to avoid overload.
+- **Arabic and Persian text** can now be reordered correctly in the terminal UI. Turn on in /settings.
+- **Reasoning effort** can now be supplied when an ACP client opens or resumes a session.
+- **Session titles** now refresh early in the conversation and stay stable; /resume shows a recap and last-turn summary when available.
+- **GROK_FORCE_LOGIN_TEAM_ID** environment variable now lets launchers restrict interactive login to one or more teams.
+- **Preparing spinner** now shows readable labels such as "Writing file…" and "Writing edit…" for common tools.
+
 # 1.17.2 — 2026-08-20
 
 ## Bug Fixes
