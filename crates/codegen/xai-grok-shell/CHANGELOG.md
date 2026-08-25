@@ -1,5 +1,17 @@
 # Changelog
 
+# 1.19.0 — 2026-08-25
+
+## Features
+
+- **同步上游 monorepo 1.0.8** (`SOURCE_REV` 437c7c92): 自定义插件市场; `/minimal` 与 `/fullscreen` 进程内切换; workflow 子代理支持 effort 与 agent_budget; MCP 发现与合并按 server 名键控, stdio MCP 启动不再阻塞会话; 反馈图片附件端到端; 上箭头跳转排队提示; 启动/取消/输入等待延迟埋点; 子代理并发采样限流防代理限速; 历史任务提速.
+- **上游 1.0.7/1.0.8 修复与体验**: MCP 表单输入与 URL 同意弹窗; Ctrl+S 暂存提示草稿; /workflow 自动补全与运行列表; 后续消息在等待子代理时立即发送; 并发子代理打开不再冻结.
+
+## Notes
+
+- 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn+hookify / language / Tasks 面板位置 / 会话标题左对齐 / 无 Sentry / 明文提示词.
+- 产品版本继续走本地 1.x; 上游锁步号 1.0.8.
+
 # 1.18.0 — 2026-08-23
 
 ## Features
@@ -17,6 +29,50 @@
 - 本地设计保留不变: tasks 面板仍在 scrollback 下 prompt 上 (已移植到上游新 `AgentViewLayoutParams` 布局并补回归测试); 关自动更新 / soft-warn / language / 去 Sentry / 明文提示词等未动.
 - 产品版本继续走本地 1.x; 上游锁步号 1.0.6.
 
+# 1.0.8 — 2026-08-20
+
+## Features
+
+- MCP servers can now ask for form input or URL consent through the same popup used for questions.
+- Ctrl+S now stashes the current prompt draft so you can send something else and restore it later.
+- ** /workflow** now autocompletes saved workflow names and shows only valid runs for pause/resume/stop/save.
+
+## Bug Fixes
+
+- Downloading a folder that contains only one file now produces a zip that still extracts as a folder.
+- Failed tool calls for tools the model invented now clearly state the tool does not exist.
+- **Status line** refresh timer now uses consistent naming and no longer shows errors on deliberately hidden rows.
+- **Workflow agent rows** now display current context usage instead of cumulative token counts.
+- **Follow-up messages** now send immediately while waiting on a subagent or task, including after using /btw.
+
+## Performance
+
+- Opening many subagents at once no longer freezes the interface while loading their history.
+- **Concurrent subagents** now start much faster and no longer freeze the parent session.
+
+
+# 1.0.7 — 2026-08-19
+
+## Features
+
+- Users hitting startup timeouts can now raise the connect budget with the `GROK_CONNECT_UI_TIMEOUT_SECS` environment variable.
+- Permission prompts now show "Always allow" and "Never allow" options by default.
+- Users can now delete scheduled background loops directly from the tray.
+- **Status line command** scripts can now run on a timer via refresh_interval in config.toml.
+- **Permission prompts** now offer a 'Never allow' choice for MCP tools and web-fetch domains that persists per project.
+- **Workflows tab** added to the extensions modal (Ctrl+L or /plugins) listing installed workflows with name, source, and description.
+- **New /workflows** command opens the Workflows catalog tab; use **/workflow runs** to view live workflow runs.
+- **Bare /workflow** (or /workflow runs) now lists active and recent workflow runs with status and progress instead of usage help.
+- **Workflows** row added to the Ctrl+P command palette, opening the Workflows catalog tab.
+
+## Bug Fixes
+
+- **MCP server connections** in non-interactive sessions no longer incorrectly require authentication for tokenless servers.
+- Fixed startup timeouts caused by concurrent auth refreshes across multiple sessions.
+- **Tool call loops** are interrupted earlier to avoid wasting time on repeated identical actions.
+- **Subagents** no longer receive the ask-user-question tool.
+- Bare email addresses are now turned into clickable mailto links in the pager.
+
 # 1.0.6 — 2026-08-18
 
 ## Breaking Changes
@@ -31,7 +87,6 @@
 
 ## Bug Fixes
 
-- **Subagents** no longer show multiple-choice questions; only the primary agent can ask them.
 - **Fixed session startup hangs** on large or unhealthy git repositories.
 - **Queued messages** during goals no longer starve, and editing queued prompts works reliably.
 - **Consent notice** on first launch now shows clickable links and handles keyboard/mouse correctly.
