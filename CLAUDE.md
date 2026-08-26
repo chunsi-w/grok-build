@@ -71,12 +71,12 @@
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
 
 1. **自动更新**: 上游启动可检查/可装; 本地发行启动路径硬关. 合入后复查 `auto_update.rs` 与 `main.rs` 门控是否仍短路.
-2. **版本号**: 上游如 1.0.6; 本地产品号继续 1.18.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
+2. **版本号**: 上游如 1.0.8; 本地产品号继续 1.19.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV 7d67deac)
+### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV 437c7c92)
 
-status line 底栏; permission Never allow (MCP 工具/web-fetch 域名); 模型切换 compact; grok clone 投影 worktree; Shift 扩选; 定时循环托盘删除; sibling worktree 登记守卫 (形状+gitdir 反链); GROK_CONNECT_UI_TIMEOUT_SECS. 与上表正交.
+自定义插件市场; /minimal 与 /fullscreen 进程内切换; workflow 子代理 effort/agent_budget; MCP 发现按 server 名键控 + stdio 启动不阻塞; 反馈图片附件; 上箭头跳排队提示; 启动/取消/输入延迟埋点; 并发子代理采样限流; status line 底栏; permission Never allow; 模型切换 compact; grok clone 投影 worktree; Shift 扩选; GROK_CONNECT_UI_TIMEOUT_SECS. 与上表正交.
 
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)
