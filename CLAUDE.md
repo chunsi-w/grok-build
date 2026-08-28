@@ -96,7 +96,7 @@ python3 crates/codegen/xai-grok-hooks/examples/hooks/bin/chinese-punctuation-war
 
 ## 上游同步后 Hookify 门控 (强制, 发布前必须验证)
 
-上游每次改动 hooks 网关 (dispatcher/result/hook_dispatch) 都可能冲掉本地 hookify 语义. **合并 `upstream` 后、打 tag 发版前**, 必须按**系统全局 Hookify** 口径验证本地功能仍生效, 本机跑 (不依赖新二进制, python 规则现读 ~/.claude):
+上游每次改动 hooks 网关 (dispatcher/result/hook_dispatch) 都可能冲掉本地 hookify 语义. **合并 `upstream` 后, 打 tag 发版前**, 必须按**系统全局 Hookify** 口径验证本地功能仍生效, 本机跑 (不依赖新二进制, python 规则现读 ~/.claude):
 
 1. **全局规则仍在** (软链到插件 examples): `ls ~/.claude/hookify.*.local.md`, 至少含 type-cast / fqcn 的 `pre` 规则 + `warn` 兜底.
 2. **本地 hook 链未被上游冲掉**: `git diff <上一个版本tag>..HEAD -- .grok/hooks` 应为空或仅增 (rules_engine.py 是本地特有, 上游默认无此文件).
