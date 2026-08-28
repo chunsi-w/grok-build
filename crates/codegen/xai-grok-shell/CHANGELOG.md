@@ -1,5 +1,16 @@
 # Changelog
 
+# 1.20.1 — 2026-08-28
+
+## Bug Fixes
+
+- 修复 v1.20.0 编译失败: `SequentialGateOutcome` 的 deny/block 分支构造补 `soft_warn` 字段 (此前漏了该字段导致 Linux aarch64 编译挂).
+- 删除本地死代码 `load()` (与上游对齐, 引用上游已改的 `PersistedInfo` 字段), 避免 aarch64 构建编译错误.
+
+## Notes
+
+- v1.20.0 tag 因编译失败无产物, 本次以 1.20.1 重打重发.
+
 # 1.20.0 — 2026-08-26
 
 ## Features

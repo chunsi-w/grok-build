@@ -153,6 +153,7 @@ async fn dispatch_sequential_gate(
                 return SequentialGateOutcome {
                     block: Some((spec.name.clone(), reason)),
                     updated_input: None,
+                    soft_warn: None,
                     results: run_results,
                 };
             }
