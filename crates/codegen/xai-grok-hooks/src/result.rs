@@ -48,6 +48,16 @@ impl HookDecision {
     }
 }
 
+/// The outcome of a `user_prompt_submit` gate dispatch. Deliberately not
+/// [`HookDecision`]: the prompt gate's wire vocabulary is `block` (`deny` is
+/// a tool-gate word and an error here), and `reason` is user-facing text,
+/// never model context.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PromptDecision {
+    Allow,
+    Block { reason: String, hook_name: String },
+}
+
 /// Model-visible prefix for a blocked tool (tool_result content).
 pub fn format_hook_denied_for_model(reason: &str) -> String {
     format!("Hook denied: {reason}")
