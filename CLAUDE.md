@@ -71,12 +71,12 @@
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
 
 1. **自动更新**: 上游启动可检查/可装; 本地发行启动路径硬关. 合入后复查 `auto_update.rs` 与 `main.rs` 门控是否仍短路.
-2. **版本号**: 上游如 1.0.8; 本地产品号继续 1.19.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
+2. **版本号**: 上游如 1.0.10; 本地产品号继续 1.20.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV 437c7c92)
+### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV 70ec060e)
 
-自定义插件市场; /minimal 与 /fullscreen 进程内切换; workflow 子代理 effort/agent_budget; MCP 发现按 server 名键控 + stdio 启动不阻塞; 反馈图片附件; 上箭头跳排队提示; 启动/取消/输入延迟埋点; 并发子代理采样限流; status line 底栏; permission Never allow; 模型切换 compact; grok clone 投影 worktree; Shift 扩选; GROK_CONNECT_UI_TIMEOUT_SECS. 与上表正交.
+UserPromptSubmit 阻塞门 + hook 网关重构 (run prompt gate before chat-state commit, block 后 hold 队列); 身份戳 + runtime 从 chat store 重水合; auto 模式放行 mkdir/touch; headless 会话默认 always-allow; websocket crates 统一 0.28; sandbox 规范化 socket mask + Devbox 强制 bubblewrap; 旧模型 slug 重定向 grok-4.6; voice 在 Ubuntu 22.04 回退; computer-hub bot relay 连接管理; 自定义插件市场; /minimal 进程内切换; workflow 子代理 effort/agent_budget. 与上表正交.
 
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)
@@ -93,6 +93,20 @@
 python3 .grok/hooks/scripts/rules_engine.py --self-test
 python3 crates/codegen/xai-grok-hooks/examples/hooks/bin/chinese-punctuation-warn.py --self-test
 ```
+
+## 上游同步后 Hookify 门控 (强制, 发布前必须验证)
+
+上游每次改动 hooks 网关 (dispatcher/result/hook_dispatch) 都可能冲掉本地 hookify 语义. **合并 `upstream` 后, 打 tag 发版前**, 必须按**系统全局 Hookify** 口径验证本地功能仍生效, 本机跑 (不依赖新二进制, python 规则现读 ~/.claude):
+
+1. **全局规则仍在** (软链到插件 examples): `ls ~/.claude/hookify.*.local.md`, 至少含 type-cast / fqcn 的 `pre` 规则 + `warn` 兜底.
+2. **本地 hook 链未被上游冲掉**: `git diff <上一个版本tag>..HEAD -- .grok/hooks` 应为空或仅增 (rules_engine.py 是本地特有, 上游默认无此文件).
+3. **真实 write 探针** (写后即删): 写含 `(int)`/`(string)` 的 PHP → 须被 `block-php-type-cast-pre` 拦截 (文件不落盘); 写含 `\App\Foo::class` 的 PHP → 须被 `block-php-inline-fqcn-pre` 拦截; 写干净 PHP → 放行零误报.
+4. **soft-warn 语义锚点** (Rust 侧只读确认, 不本机编译): `parse_observe_result` (runner/command.rs), `post_tool_use_observe_stdout_json` (local_fork_regression.rs), PostToolUse 内联分发注释 (tool_calls.rs) 三者都必须在.
+5. **两条自检**: `rules_engine.py --self-test` 与 `chinese-punctuation-warn.py --self-test` 全过.
+
+以上任一失败 = 发布门不通过, 先修再发 tag. (v1.19.0/v1.20.0 均按此门控通过.)
+
+
 
 规则 fixture 真源: `.grok/hooks/fixtures/rules/hookify.*.local.md` (不依赖本机 `~/.claude`).
 Rust 入口: `crates/codegen/xai-grok-hooks/src/local_fork_regression.rs`.
