@@ -1312,11 +1312,18 @@ pub(crate) async fn spawn_session_actor(
                 false,
             );
             let git_root = xai_grok_workspace::session::git::find_git_root_from_path(cwd_path).ok();
-            let (registry, errors) = crate::util::hooks::discover_hooks(
+            let (mut registry, errors) = crate::util::hooks::discover_hooks(
                 git_root.as_deref(),
                 &rebuild_spec.compat,
                 project_trusted,
             );
+            // 插件 hooks 启动并入: 此前只有 reload 路径 (apply_plugin_registry_snapshot)
+            // 会挂插件 hooks, 冷启动会话的注册表恒不含它们, 插件拦截静默失效.
+            if let Some(reg) = plugin_registry.as_ref() {
+                registry.append_specs(crate::util::hooks::collect_plugin_hook_specs(
+                    &reg.active_plugins(),
+                ));
+            }
             for e in &errors {
                 tracing::warn!(error = ?e, "hook loading error");
             }
