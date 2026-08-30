@@ -121,6 +121,13 @@ test -f crates/codegen/xai-grok-hooks/src/local_fork_regression.rs
 rg -n 'parse_observe_result' crates/codegen/xai-grok-hooks/src/runner/command.rs
 rg -n 'post_tool_use_observe_stdout_json' crates/codegen/xai-grok-hooks/src/local_fork_regression.rs
 
+# Hook warn/block 必须红字 (3fe74d81 吃上游曾冲掉, TUI 灰到看不见)
+rg -n 'HookAnnotation' crates/codegen/xai-grok-pager/src/scrollback/blocks/session_event.rs | head
+rg -n 'hook_annotation_renders_red_not_muted|accent_error' \
+  crates/codegen/xai-grok-pager/src/scrollback/blocks/session_event.rs
+# 应含: HookAnnotation 用 theme.accent_error; 单测 hook_annotation_renders_red_not_muted
+
+
 # 无 Sentry
 test ! -f crates/codegen/xai-grok-telemetry/src/sentry.rs && echo no_sentry_file
 rg -n 'name = "sentry' Cargo.lock || echo no_sentry_lock
