@@ -13722,6 +13722,8 @@ dependencies = [
  "xai-token-estimation",
  "xai-tty-utils",
  "enum_delegate",
+            "dirs 5.0.1",
+            "derive_more 0.99.20",
 ]
 
 [[package]]
@@ -14189,6 +14191,9 @@ dependencies = [
  "xai-tty-utils",
  "xai-workflow",
  "zstd",
+            "dirs 6.0.0",
+            "similar",
+            "tokio-stream",
 ]
 
 [[package]]
