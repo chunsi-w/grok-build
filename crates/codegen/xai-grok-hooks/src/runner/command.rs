@@ -269,20 +269,26 @@ pub async fn run_command_hook(
                 "hook command completed"
             );
 
-            let system_message = extract_system_message(&stdout);
+            let mut system_message = extract_system_message(&stdout);
             let (result, elapsed) = match mode {
                 GateKind::Observe => {
-                    if exit_code == 0 {
-                        (HookRunnerResult::Success, elapsed)
-                    } else {
-                        (
-                            HookRunnerResult::Failed(append_stderr_line(
-                                &format!("exit code {exit_code}"),
-                                &stderr,
-                            )),
-                            elapsed,
-                        )
+                    let parsed = parse_observe_result(&stdout, &stderr, exit_code, &spec.name);
+                    if system_message.is_none() {
+                        system_message = match &parsed {
+                            HookRunnerResult::Allow {
+                                additional_context: Some(ctx),
+                                ..
+                            } => Some(ctx.clone()),
+                            HookRunnerResult::Deny { reason, .. }
+                            | HookRunnerResult::Block { reason, .. } => Some(reason.clone()),
+                            _ => None,
+                        };
                     }
+                    let result = match parsed {
+                        HookRunnerResult::Failed(err) => HookRunnerResult::Failed(err),
+                        _ => HookRunnerResult::Success,
+                    };
+                    (result, elapsed)
                 }
                 GateKind::Tool => {
                     parse_blocking_result(&stdout, &stderr, exit_code, &spec.name, elapsed)
@@ -575,6 +581,58 @@ fn append_stderr_line(message: &str, stderr: &str) -> String {
     match stderr_first_line(stderr) {
         Some(line) => format!("{message}: {}", clip_reason(line)),
         None => message.to_string(),
+    }
+}
+
+/// PostToolUse 等 Observe: exit 0 仍解析 soft-warn JSON, 否则审计 reason 被丢弃.
+fn parse_observe_result(
+    stdout: &str,
+    stderr: &str,
+    exit_code: i32,
+    hook_name: &str,
+) -> HookRunnerResult {
+    if exit_code != 0 {
+        return HookRunnerResult::Failed(append_stderr_line(
+            &format!("exit code {exit_code}"),
+            stderr,
+        ));
+    }
+    let trimmed = stdout.trim();
+    if trimmed.is_empty() {
+        return HookRunnerResult::Success;
+    }
+    let Some(json) = serde_json::from_str::<GateHookJson>(trimmed)
+        .ok()
+        .filter(GateHookJson::is_gate_document)
+    else {
+        return HookRunnerResult::Success;
+    };
+    match gate_outcome(
+        json,
+        hook_name,
+        stderr_first_line(stderr),
+        HookHealth::from_success(true),
+    ) {
+        GateOutcome::Allow {
+            additional_context,
+            updated_input,
+        } => HookRunnerResult::Allow {
+            additional_context,
+            updated_input,
+        },
+        GateOutcome::Deny(reason) => HookRunnerResult::Deny {
+            reason,
+            hook_name: hook_name.to_string(),
+        },
+        GateOutcome::Ask {
+            additional_context,
+            updated_input,
+            ..
+        } => HookRunnerResult::Allow {
+            additional_context,
+            updated_input,
+        },
+        GateOutcome::Defer | GateOutcome::Failed(_) => HookRunnerResult::Success,
     }
 }
 
@@ -923,6 +981,43 @@ mod tests {
                 "the error must survive a full-length stderr line, got: {reason}"
             ),
             other => panic!("expected Deny, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn observe_exit0_soft_warn_json_is_allow_with_context() {
+        let result = parse_observe_result(
+            r#"{"decision":"allow","reason":"[警告] **[warn-sol-return-zero]**","hookSpecificOutput":{"additionalContext":"L10 return 0;"}}"#,
+            "",
+            0,
+            "hookify",
+        );
+        match result {
+            HookRunnerResult::Allow {
+                additional_context: Some(ctx),
+                ..
+            } => assert!(
+                ctx.contains("return 0") || ctx.contains("warn-sol-return-zero"),
+                "got {ctx}"
+            ),
+            other => panic!("expected Allow with context, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn observe_exit0_claude_additional_context_is_allow() {
+        let result = parse_observe_result(
+            r#"{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"hookify warn: prefer scrape"}}"#,
+            "",
+            0,
+            "hookify",
+        );
+        match result {
+            HookRunnerResult::Allow {
+                additional_context: Some(ctx),
+                ..
+            } => assert!(ctx.contains("prefer scrape"), "got {ctx}"),
+            other => panic!("expected Allow with context, got {other:?}"),
         }
     }
 

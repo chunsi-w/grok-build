@@ -571,7 +571,7 @@ impl SessionActor {
     ) -> ConversationItem {
         wrap_in_reminder_tag(
             &format!(
-                "Context from PreToolUse hook '{}':\n{}",
+                "Context from hook '{}':\n{}",
                 context.hook_name, context.text
             ),
             self.reminder_wrapper_tag(),

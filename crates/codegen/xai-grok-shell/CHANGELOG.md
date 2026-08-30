@@ -1,3 +1,15 @@
+# 1.20.6 - 2026-08-31
+
+## Bug Fixes
+
+- PostToolUse 等 Observe gate 恢复解析 stdout JSON: exit 0 的 soft-warn additionalContext 不再被丢弃, deny/block reason 兜底进 systemMessage.
+- PostToolUse 结果回传模型: command 类 hookify 规则 (sg/slither) 的警告现在进模型上下文与 TUI, 不再静默.
+
+## Notes
+
+- 仅 grok-cli 侧 hook 链路适配, 不改 hookify 插件评估逻辑; Claude Code 语义不变.
+- 产品版本 1.20.6.
+
 # 1.20.5 - 2026-08-30
 
 ## Bug Fixes

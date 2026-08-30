@@ -242,20 +242,21 @@ impl SessionActor {
     /// Dispatch a non-blocking hook event: build the envelope, fire observe-only
     /// client hooks, then run the on-disk registry. No-op (no payload built) when no
     /// hook listens for `event`, so it stays inert when unused.
+    /// 返回 runs, 供 PostToolUse 把 systemMessage 回传模型 (Observe 不得只 TUI).
     pub(super) async fn dispatch_hook(
         &self,
         event: xai_grok_hooks::event::HookEventName,
         payload: xai_grok_hooks::event::HookPayload,
         prompt_id: Option<&str>,
         tool_name: Option<&str>,
-    ) {
+    ) -> Vec<xai_grok_hooks::result::HookRunResult> {
         if !self.may_have_hooks_for(event) {
-            return;
+            return Vec::new();
         }
         // Fires observe-only client hooks before (and independent of) the on-disk registry guard below.
         let envelope = self.fire_hook(event, prompt_id.map(|s| s.to_string()), payload);
         let Some(registry) = self.hook_registry.borrow().clone() else {
-            return;
+            return Vec::new();
         };
         let ctx = self.hook_run_ctx();
         // Prompt-gate events go through dispatch_prompt_submit_hook;
@@ -267,6 +268,7 @@ impl SessionActor {
             .await;
         self.emit_hook_executed_telemetry(&event.to_string(), tool_name, &results)
             .await;
+        results
     }
 
     /// Enforcement scope for a prompt-gate block: only a real user prompt on

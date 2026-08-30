@@ -1061,23 +1061,53 @@ impl SessionActor {
                 let (tool_result_val, tool_result_truncated) =
                     xai_grok_hooks::event::truncate_payload(tool_result_value);
                 let hook_tool_name = prepared.hook_tool_name();
-                self.dispatch_hook(
-                    xai_grok_hooks::event::HookEventName::PostToolUse,
-                    xai_grok_hooks::event::HookPayload::PostToolUse {
-                        tool_name: hook_tool_name.to_owned(),
-                        tool_use_id: prepared.call_id.clone(),
-                        tool_input: tool_input_value,
-                        tool_result: tool_result_val,
-                        tool_input_truncated,
-                        tool_result_truncated,
-                        duration_ms: None,
-                        is_backgrounded: false,
-                        subagent_type: self.subagent_type_label(),
-                    },
-                    None,
-                    Some(hook_tool_name),
-                )
-                .await;
+                // PostToolUse Observe 必须把 stdout JSON/systemMessage 回传模型, 不得只 TUI.
+                let post_results = self
+                    .dispatch_hook(
+                        xai_grok_hooks::event::HookEventName::PostToolUse,
+                        xai_grok_hooks::event::HookPayload::PostToolUse {
+                            tool_name: hook_tool_name.to_owned(),
+                            tool_use_id: prepared.call_id.clone(),
+                            tool_input: tool_input_value,
+                            tool_result: tool_result_val,
+                            tool_input_truncated,
+                            tool_result_truncated,
+                            duration_ms: None,
+                            is_backgrounded: false,
+                            subagent_type: self.subagent_type_label(),
+                        },
+                        None,
+                        Some(hook_tool_name),
+                    )
+                    .await;
+                for run in &post_results {
+                    let (hook_name, message) = match run {
+                        xai_grok_hooks::result::HookRunResult::Success {
+                            hook_name,
+                            system_message,
+                            ..
+                        }
+                        | xai_grok_hooks::result::HookRunResult::Blocked {
+                            hook_name,
+                            system_message,
+                            ..
+                        }
+                        | xai_grok_hooks::result::HookRunResult::Failed {
+                            hook_name,
+                            system_message,
+                            ..
+                        } => (hook_name.as_str(), system_message.as_deref()),
+                        xai_grok_hooks::result::HookRunResult::Skipped { .. } => continue,
+                    };
+                    if let Some(text) = message.map(str::trim).filter(|m| !m.is_empty()) {
+                        deferred_followups.push(self.wrap_hook_context(
+                            &xai_grok_hooks::dispatcher::AdditionalContext {
+                                hook_name: hook_name.to_string(),
+                                text: text.to_string(),
+                            },
+                        ));
+                    }
+                }
             }
             self.events.tool_finished();
             let tool_outcome = match &tool_loop {
