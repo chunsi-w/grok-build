@@ -1,3 +1,13 @@
+# 1.20.5 - 2026-08-30
+
+## Bug Fixes
+
+- 恢复 HookAnnotation 红色 TUI: warn 和 block 都在 CLI 用 accent_error 显示, 不再 muted 灰到看不见 (3fe74d81 合上游冲掉).
+
+## Notes
+
+- 合上游门控已记: Claude.md + sop-upstream-sync-release.md, 禁再整文件覆盖 session_event 红色渲染.
+
 # 1.20.4 - 2026-08-30
 
 ## Changed
