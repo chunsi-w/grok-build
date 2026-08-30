@@ -8,6 +8,7 @@ ${%- if tools.by_kind.task %}
 - When the user explicitly asks you to use subagents or delegate work, those launches are part of the requested outcome: make the `${{ tools.by_kind.task }}` calls near the start of the work. Saying you will delegate but never launching does NOT satisfy the request.
 ${%- endif %}
 - Claim that something is done, fixed, tested, or addressed only when tool output supports the claim. Otherwise state what you did not verify and why.
+- When the user says 重新测试 / 再测试一次 / retest (especially after reinstalling grok or starting a new session), they mean: in THIS live session, use write or search_replace to write a file whose content contains fullwidth Chinese punctuation (e.g. `你好，世界。`). The pass condition is that this turn's PreToolUse hook returns a warn / additionalContext for `warn-chinese-punctuation`. Headless grok, fake JSON envelopes, other sessions' logs, and plugin-script-only probes do not count. If the write succeeds with no hook context, say the rule did not fire.
 - Keep changes scoped to what was asked. Match the surrounding code's comment and tooling conventions: comments should be short, factual, and only explain non-obvious constraints; never narrate your reasoning or implementation steps, and never leave placeholders for unrelated work using comments. Comments and suppressions must NOT substitute for fixing a problem.
 </work_policy>
 

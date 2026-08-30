@@ -1,3 +1,13 @@
+# 1.20.4 - 2026-08-30
+
+## Changed
+
+- 提示词: 用户说 "重新测试" / 新开会话再测, 一律指当前会话用 write 测 hookify 中文标点拦截是否弹出 additionalContext, 禁 headless/假信封顶替.
+
+## Notes
+
+- 仅提示词与版本号.
+
 # 1.20.3 - 2026-08-30
 
 ## Changed
