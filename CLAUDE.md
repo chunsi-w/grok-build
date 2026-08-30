@@ -74,7 +74,7 @@
 2. **版本号**: 上游如 1.0.10; 本地产品号继续 1.20.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV 70ec060e)
+### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV bc7f02ed)
 
 UserPromptSubmit 阻塞门 + hook 网关重构 (run prompt gate before chat-state commit, block 后 hold 队列); 身份戳 + runtime 从 chat store 重水合; auto 模式放行 mkdir/touch; headless 会话默认 always-allow; websocket crates 统一 0.28; sandbox 规范化 socket mask + Devbox 强制 bubblewrap; 旧模型 slug 重定向 grok-4.6; voice 在 Ubuntu 22.04 回退; computer-hub bot relay 连接管理; 自定义插件市场; /minimal 进程内切换; workflow 子代理 effort/agent_budget. 与上表正交.
 

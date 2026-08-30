@@ -1,3 +1,20 @@
+# 1.20.2 - 2026-08-30
+
+## Bug Fixes
+
+- **插件 hooks 冷启动注册修复**: 会话启动时未将插件 hooks 装入注册表 (仅 /plugins reload 路径挂载), hookify 拦截在冷启动会话静默失效; 现启动即并入, 与 reload 同一套逻辑.
+- hookify 插件 Grok 适配回归: warn 不再转 deny+代写文件, 保持 Claude Code 语义 (放行 + additionalContext 提示); block 规则仍 deny.
+
+## Features
+
+- **同步上游 monorepo 1.0.12** (`SOURCE_REV` bc7f02ed): SessionStart hook 持久化沙箱安全修复; scheduler 任务 UUID 保全与已完成循环任务停止; 安装包 zstd/gzip 压缩分发; 瞬态采样失败重试; pager input/search 移入 render crate 等.
+
+## Notes
+
+- 废弃 `~/.grok/hooks/project-rules.json` 手工软链注册机制, 规则执行统一走 hookify 插件链 (Claude Code 兼容); rules_engine.py 降级为回归自检资产, 装机自检覆盖插件启用与关键规则在位.
+- 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn+hookify / language / 无 Sentry / 标题左对齐.
+- 产品版本继续走本地 1.x; 上游锁步号 1.0.12.
+
 # Changelog
 
 # 1.20.1 — 2026-08-28
