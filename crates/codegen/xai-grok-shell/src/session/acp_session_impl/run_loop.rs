@@ -62,7 +62,7 @@ pub(super) async fn fire_session_end_hooks(
         )
         .await;
         session
-            .send_hook_execution("session_end", None, None, &results.results)
+            .send_hook_execution("session_end", None, None, &results)
             .await;
     }
     let _stop = session_end::timed_child(timer, Phase::HooksStop, span.span());
@@ -1886,14 +1886,14 @@ pub(super) async fn run_session(
                             );
                             if let Some(registry) = session.hook_registry.borrow().clone() {
                                 let ctx = session.hook_run_ctx();
-                                let hook_out = xai_grok_hooks::dispatcher::dispatch_non_blocking(
+                                let results = xai_grok_hooks::dispatcher::dispatch_non_blocking(
                                     &registry,
                                     xai_grok_hooks::event::HookEventName::SessionStart,
                                     &envelope,
                                     &ctx,
                                 )
                                 .await;
-                                session.send_hook_execution("session_start", None, None, &hook_out.results).await;
+                                session.send_hook_execution("session_start", None, None, &results).await;
                             }
                         }
                         SessionCommand::GetFeedbackContext { turn_number, responds_to } => {
