@@ -538,8 +538,11 @@ impl BlockContent for SessionEventBlock {
         }
 
         let theme = Theme::current();
-        // Failures and re-auth / context-overflow prompts are actionable, not informational; render them in the warning color rather than muted
-        let style = if self.event.is_warning_banner() {
+        // Hook block/warn annotations must be red and high-contrast under the
+        // tool call (both deny and soft-warn allow). Other failures use warning.
+        let style = if matches!(self.event, SessionEvent::HookAnnotation { .. }) {
+            theme.fg(theme.accent_error)
+        } else if self.event.is_warning_banner() {
             ratatui::style::Style::default().fg(theme.warning)
         } else {
             theme.muted()
@@ -581,7 +584,9 @@ impl BlockContent for SessionEventBlock {
             return (ctx.mode != DisplayMode::Collapsed)
                 .then(|| AccentStyle::static_color(theme.accent_tool));
         }
-        if self.event.is_warning_banner() {
+        if matches!(self.event, SessionEvent::HookAnnotation { .. }) {
+            Some(AccentStyle::static_color(theme.accent_error))
+        } else if self.event.is_warning_banner() {
             Some(AccentStyle::static_color(theme.warning))
         } else {
             None
@@ -891,6 +896,30 @@ mod tests {
         assert_eq!(
             plain(&out.lines[1]),
             "API error (status 400 Bad Request): invalid_image: too big"
+        );
+    }
+
+    #[test]
+    fn hook_annotation_renders_red_not_muted() {
+        let block = SessionEventBlock::new(SessionEvent::HookAnnotation {
+            message: "warn-chinese-punctuation: avoid fullwidth punctuation".into(),
+        });
+        let theme = Theme::current();
+        assert_eq!(
+            block.accent(&ctx()).map(|a| a.color),
+            Some(theme.accent_error),
+            "hook block/warn annotations must render in red under the tool call"
+        );
+        let out = block.output(&ctx());
+        let has_error_fg = out.lines.iter().any(|line| {
+            line.content.spans.iter().any(|span| {
+                span.style.fg == Some(theme.accent_error)
+                    || span.style.fg == ratatui::style::Style::default().fg(theme.accent_error).fg
+            })
+        });
+        assert!(
+            has_error_fg,
+            "hook annotation text must use accent_error"
         );
     }
 
