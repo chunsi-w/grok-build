@@ -1,3 +1,14 @@
+# 1.20.3 - 2026-08-30
+
+## Changed
+
+- 系统提示词对齐全局规则 (`plugins/a/CLAUDE.md`): 新增 `<factual_verification>` (未复现不得称确认; 测试必须打真实入口); 强化 mindset/code_discipline/collaboration/output_efficiency (ast-grep 沉淀, 语音专名, mermaid, 更优做法一句).
+
+## Notes
+
+- 仅提示词与版本号, 无 Rust 逻辑/依赖变更.
+- 产品版本 1.20.3.
+
 # 1.20.2 - 2026-08-30
 
 ## Bug Fixes
