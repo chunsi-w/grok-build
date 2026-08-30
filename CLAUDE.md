@@ -50,6 +50,7 @@
 | 启动禁用官方自动更新 | `pager-bin` `should_check_for_updates` 恒 false; `auto_update::run_update_if_available` / background check 本地 noop | 启动不检查不下载; 手动 `grok update` 路径可另议 |
 | 启动 UI 精简 | `local_ui::{suppress_announcements,suppress_changelog,suppress_logo}` | 非 test 构建隐藏公告/changelog/点阵 logo |
 | Hook soft-warn / hookify | `decision_parse` / `dispatcher` / `result`; `runner/command.rs` Observe 解析 stdout JSON; PostToolUse 回传模型 + TUI HookAnnotation | block 拦, warn 放行并让模型/TUI 读到提示. 禁 Observe 直接 Success 丢 JSON |
+| Hook warn/block TUI 红字 | `pager` `session_event.rs` `HookAnnotation` 必须 `theme.accent_error` (正文+侧条); 单测 `hook_annotation_renders_red_not_muted` | **warn 和 block 都要在 CLI 红字可见, 禁 muted 灰字.** 合上游时禁整文件吃掉这段; CompactStarted 等新变体只补枚举, 不覆盖红色渲染. v1.20.2 的 3fe74d81 曾冲掉, 禁止再犯 |
 | `[ui].language` / `GROK_LANGUAGE` | shared ui_config + shell resolve/user_message/prompt | 沟通/标题/commit 等生成文案语言 |
 | Tasks 面板位置 | `views/agent.rs` 布局: scrollback 下, prompt 上 | 不跟上游若改回顶部 |
 | 会话标题左对齐 | `prompt_widget` 顶边 title | 不跟上游若改回右对齐 |
