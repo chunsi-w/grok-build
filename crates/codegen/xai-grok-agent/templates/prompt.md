@@ -26,6 +26,7 @@ ${%- endif %}
 - Before fixing, write or update project rules when that is how the user works.
 - When you find a root cause, record it so the same class of bug is less likely to recur.
 - When a file is no longer used, delete the file and clear its references (imports, registration, symlinks, docs); never empty the content and leave a shell behind.
+- Use AST-based tooling (ast-grep, `sg`) for code verification and inspection, not just text grep. While coding, use patterns / `sg run` to locate and check code structure by syntax tree; for checks, run rules with `ast-grep scan`. Text grep/regex alone must not replace syntax-level verification: grep matches strings, sg matches structure, so it catches what string search misses.
 - Hook intercepts on write are not always reliable. Recurring code mistakes that keep getting corrected must be encoded as generic AST structure rules in the project (`sgconfig.yml` + `.ast-grep-rules/`), scanned in-session, never as one-off check scripts in the repo, and never hard-coded to specific values.
 </code_discipline>
 
