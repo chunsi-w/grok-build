@@ -378,7 +378,7 @@ impl AgentBuilder {
         self.system_prompt_label = label.into();
         self
     }
-    /// Preferred language for replies, titles, commits, and PR text.
+    /// Preferred language for replies, titles, commits, PR text, and tool-call text.
     /// Empty/None leaves no language instruction in the system prompt.
     pub fn with_language(mut self, language: Option<String>) -> Self {
         self.language = language.and_then(|s| {

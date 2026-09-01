@@ -153,8 +153,9 @@ pub struct PromptContext {
     #[serde(default = "default_system_prompt_label")]
     pub system_prompt_label: String,
     /// Preferred language for communication and generated text (titles,
-    /// commits, PR descriptions). When set, the system prompt includes a
-    /// language instruction block. Unset = no language instruction.
+    /// commits, PR descriptions, tool-call text). When set, the system
+    /// prompt includes a language instruction block. Unset = no language
+    /// instruction.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub language: Option<String>,
 }

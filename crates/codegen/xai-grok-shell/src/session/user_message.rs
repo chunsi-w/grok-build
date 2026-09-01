@@ -57,7 +57,7 @@ pub fn construct_user_message_minimal(
         .filter(|s| !s.is_empty())
         .map(|lang| {
             format!(
-                "\nPreferred language: {lang}\nAlways communicate with the user in this language. Use it for session titles, commit messages, PR descriptions, and all natural-language replies unless the user explicitly requests another language. Keep code, identifiers, file paths, and protocol keywords unchanged."
+                "\nPreferred language: {lang}\nAlways communicate with the user in this language. Use it for session titles, commit messages, PR descriptions, natural-language tool-call arguments (such as `description`, `prompt`, or `task` fields), and all natural-language replies unless the user explicitly requests another language. Keep code, identifiers, file paths, and protocol keywords unchanged."
             )
         })
         .unwrap_or_default();

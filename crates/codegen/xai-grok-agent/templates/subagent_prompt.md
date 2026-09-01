@@ -76,7 +76,7 @@ Current Date: ${{ current_date }}
 ${%- if language %}
 
 <language>
-Always communicate with the user in ${{ language }}. Use this language for session titles, commit messages, PR descriptions, and all natural-language replies unless the user explicitly requests another language. Keep code, identifiers, file paths, and protocol keywords unchanged.
+Always communicate with the user in ${{ language }}. Use this language for session titles, commit messages, PR descriptions, natural-language tool-call arguments (such as `description`, `prompt`, or `task` fields), and all natural-language replies unless the user explicitly requests another language. Keep code, identifiers, file paths, and protocol keywords unchanged.
 </language>
 ${%- endif %}
 ${%- if memory_enabled and tools.by_kind.memory_search and tools.by_kind.memory_get %}

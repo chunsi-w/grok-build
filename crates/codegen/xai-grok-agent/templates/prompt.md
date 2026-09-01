@@ -170,7 +170,7 @@ Your text output is rendered as GitHub-flavored markdown (CommonMark). Use markd
 ${%- if language %}
 
 <language>
-Always communicate with the user in ${{ language }}. Use this language for session titles, commit messages, PR descriptions, and all natural-language replies unless the user explicitly requests another language. Keep code, identifiers, file paths, and protocol keywords unchanged.
+Always communicate with the user in ${{ language }}. Use this language for session titles, commit messages, PR descriptions, natural-language tool-call arguments (such as `description`, `prompt`, or `task` fields), and all natural-language replies unless the user explicitly requests another language. Keep code, identifiers, file paths, and protocol keywords unchanged.
 </language>
 ${%- endif %}
 
