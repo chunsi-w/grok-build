@@ -72,12 +72,12 @@
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
 
 1. **自动更新**: 上游启动可检查/可装; 本地发行启动路径硬关. 合入后复查 `auto_update.rs` 与 `main.rs` 门控是否仍短路.
-2. **版本号**: 上游如 1.0.10; 本地产品号继续 1.20.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
+2. **版本号**: 上游如 1.0.13; 本地产品号继续 1.21.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV bc7f02ed)
+### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV d761e8ba)
 
-UserPromptSubmit 阻塞门 + hook 网关重构 (run prompt gate before chat-state commit, block 后 hold 队列); 身份戳 + runtime 从 chat store 重水合; auto 模式放行 mkdir/touch; headless 会话默认 always-allow; websocket crates 统一 0.28; sandbox 规范化 socket mask + Devbox 强制 bubblewrap; 旧模型 slug 重定向 grok-4.6; voice 在 Ubuntu 22.04 回退; computer-hub bot relay 连接管理; 自定义插件市场; /minimal 进程内切换; workflow 子代理 effort/agent_budget. 与上表正交.
+UserPromptSubmit 阻塞门 + hook 网关重构 (run prompt gate before chat-state commit, block 后 hold 队列); 身份戳 + runtime 从 chat store 重水合; auto 模式放行 mkdir/touch; headless 会话默认 always-allow; websocket crates 统一 0.28; sandbox 规范化 socket mask + Devbox 强制 bubblewrap; 旧模型 slug 重定向 grok-4.6; voice 在 Ubuntu 22.04 回退; computer-hub bot relay 连接管理; 自定义插件市场; /minimal 进程内切换; workflow 子代理 effort/agent_budget; 安全修复 (Write/Edit symlink deny 绕过, GROK_CHANNEL 注入 RCE); panel dock 聚合面板 (GROK_DOCK_V2 默认关); effort 设置取代多模型变体; hooks 客户端 PostToolUse delivery 流 (本地 Observe stdout JSON 语义经 dispatch_post_tool_use_hook 保留); PostToolUseFailure 事件; 启动 settings 缓存 + 仓库状态预取 (RepoStatusSnapshot); ripgrep 压缩打包. 与上表正交.
 
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)

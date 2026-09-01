@@ -1,3 +1,71 @@
+# 1.21.0 - 2026-09-01
+
+## Features
+
+- **同步上游 monorepo 1.0.13** (`SOURCE_REV` d761e8ba): 安全修复 Write/Edit 经仓库 symlink 绕过 deny 规则与 GROK_CHANNEL 注入 config.toml 的持久 RCE; panel dock 聚合面板 (gated); effort 设置取代多模型变体; hooks 客户端 PostToolUse 反馈与上下文; PostToolUseFailure 事件; 启动 settings 缓存与仓库状态预取; ripgrep 压缩打包.
+- **语言指令覆盖工具调用参数**: `<language>` 明确 `description`/`prompt`/`task` 等自然语言工具参数用配置语言书写 (1.20.7 后补).
+- **PostToolUse 重构接上游 delivery 流**: 内联分发迁移至 `dispatch_post_tool_use_hook` + `PostToolUseDelivery`, Observe stdout JSON 语义 (parse_observe_result) 保留并回归测试.
+
+## Notes
+
+- 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn+hookify / language / Tasks 面板位置 / 会话标题左对齐 / 无 Sentry / 明文提示词.
+- 产品版本 1.21.0; 上游锁步号 1.0.13.
+
+# 1.0.13 — 2026-08-28
+
+## Features
+
+- **Length-truncated responses** now continue automatically instead of failing the turn.
+- **Hooks** can now ask the user to confirm a tool call instead of always allowing or denying.
+- **Hooks** can now request deferral or add context shown to the model after a tool runs.
+- **Session close** now records detailed timing data for performance analysis.
+- **Credit limit upsell** now offers a Try Again button to retry the last prompt.
+- **Pasted images** now show a live pixel preview in the prompt box on iTerm2.
+
+## Bug Fixes
+
+- **Transient inference failures** (stalls, drops, 5xx) now retry automatically instead of ending the turn.
+- **Windows users** can now correctly open ~/.grok and worktree sessions.
+- **Session data** is now more reliably saved after prompts and on power loss.
+- **Compaction failures** now show the actual error instead of a generic message.
+- **Truncation error messages** now show the right guidance instead of suggesting an unhelpful retry.
+- **Truncated tool calls** are now executed instead of failing the turn when arguments are complete.
+- **Images larger than 2000px** no longer brick sessions on many-image requests.
+- **Wrapped hyperlinks** in the pager now remain fully clickable on Windows Terminal instead of only the first line.
+- **Recurring scheduled tasks** now include a reminder to stop the monitor when work finishes.
+- **Scheduled task IDs** are now full UUID strings, preventing collisions when tasks are created in the same millisecond.
+
+## Performance
+
+- **Subagent spawning** is faster when connections drop during bursts.
+- **Session startup** with MCP servers is now much faster when auth is already configured.
+- **MCP server startup** no longer stalls behind a fixed batch size.
+- **CLI downloads** are now compressed, making fresh installs and updates substantially faster.
+
+
+# 1.0.12 — 2026-08-27
+
+## Features
+
+- **Credit-limit upsell** now includes a Try Again option. Max-tier users see the same question modal without Upgrade tier.
+
+## Bug Fixes
+
+- **Copying wrapped table cells** no longer inserts unwanted spaces at line breaks.
+- **MCP server connections** that fail transiently now retry instead of staying unavailable.
+- **Waiting on subagents** after an interjection no longer blocks on unrelated background work.
+- **Prompt blocks** now show friendly hook descriptions instead of internal IDs.
+- **Truncation error message** no longer suggests asking for a shorter answer.
+- **Context estimates** for conversations with reasoning are now more accurate.
+- **Token usage** after rewinding or switching modes now matches the actual server-reported count instead of overestimating.
+- **Context bar** now updates immediately when auto-compaction begins instead of waiting until it finishes.
+- **File system monitoring** for .NET projects no longer creates excessive watchers on Linux.
+- **Auto recap** no longer appears while a background task or monitor wake turn is streaming.
+
+## Performance
+
+- **Worktree creation** is faster by skipping stale reflog copies.
+
 # 1.20.7 - 2026-09-01
 
 ## Changed
@@ -121,7 +189,7 @@
 
 - 本地设计保留不变: tasks 面板仍在 scrollback 下 prompt 上 (已移植到上游新 `AgentViewLayoutParams` 布局并补回归测试); 关自动更新 / soft-warn / language / 去 Sentry / 明文提示词等未动.
 - 产品版本继续走本地 1.x; 上游锁步号 1.0.6.
-=======
+
 # 1.0.10 — 2026-08-24
 
 ## Performance
