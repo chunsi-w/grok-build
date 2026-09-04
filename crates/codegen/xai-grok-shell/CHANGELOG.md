@@ -1,3 +1,14 @@
+# 1.22.0 - 2026-09-05
+
+## Features
+
+- **同步上游 monorepo 1.0.16** (`SOURCE_REV` a549186d): MCP 2026-07-28 elicitation 多轮请求; 会话 bind 时注入 MCP; 托管 MCP/插件/市场 policy 引擎; 企业 signed `requirements.toml` 锁定可选模型; ACP `session/set_config_option`; 启动期 Enter 和弦保留; get-output 等待上限 1h; compaction 后重注入 scheduled loops / live workflows; 子代理 spawn 完成前不误失败发送; MCP OAuth 死锁修复; dock 输入与 feature flag 修复; 采样通道与 auth refresh 预热.
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号 1.0.16, SOURCE_REV 推进.
+
 # 1.21.0 - 2026-09-01
 
 ## Features
@@ -10,6 +21,86 @@
 
 - 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn+hookify / language / Tasks 面板位置 / 会话标题左对齐 / 无 Sentry / 明文提示词.
 - 产品版本 1.21.0; 上游锁步号 1.0.13.
+
+# 1.0.16 — 2026-09-01
+
+## Breaking Changes
+
+- **Enterprise policies** can now restrict which models users may select via signed requirements.toml.
+
+## Features
+
+- **MCP servers** can now be supplied at session bind time for workspace integrations.
+
+## Bug Fixes
+
+- **Long-running sessions** interrupted by expired tokens during network issues no longer lose work.
+- **Slash command suggestions** with very long names no longer show blank labels in the dropdown.
+- **Sending a message immediately after spawning a subagent** no longer fails while the child is still starting.
+- **Loading spinners** inside the extensions modal (/mcps and other tabs) now animate correctly.
+- **MCP server OAuth authentication** triggered from /mcps no longer deadlocks the session.
+
+## Performance
+
+- **Long-running subagent and task output waits** now default to a one-hour ceiling instead of ten minutes.
+
+
+# 1.0.15 — 2026-08-31
+
+## Features
+
+- **Tip appears** after repeated scrollback drag-copies suggesting /copy and /export commands.
+
+## Bug Fixes
+
+- **Session close** is now faster because memory consolidation runs at the next launch instead of blocking exit.
+- **Typed input including Enter** during pager startup is now preserved and correctly interpreted as submit or newline.
+- **Dock panel** input and rollout now respect remote settings and correctly handle keyboard focus when hidden or empty.
+
+## Performance
+
+- **First reply latency** is reduced by opening the model connection in the background when a session starts.
+- **Signed-in startup** is faster because an expired token refresh now begins in the background at agent spawn.
+- **Creating a new session** returns faster; MCP tools and other startup work happen in the background.
+
+
+# 1.0.14 — 2026-08-31
+
+## Features
+
+- **OIDC token refresh** is now proactive by default for better reliability.
+- **PostToolUse hooks** can now provide feedback and context to the model after tool execution.
+- **SDK-registered PostToolUse hooks** now provide model-facing feedback.
+- **grok usage <session-id>** now shows persisted per-turn token and cost data.
+- **Retry status** in composer and title now shows a short reason for the retry.
+- **Models can now declare** a different identifier for each reasoning-effort level instead of always sending the same id.
+- **Prompt suggestions** now respect remote configuration and default to the current session model.
+- **Windows CLI downloads** are now ~70% smaller using the same compressed sidecars as macOS and Linux.
+
+## Bug Fixes
+
+- **grok inspect** now correctly shows Claude bypass locks as advisory rather than enforced.
+- **Subagent sessions** no longer leak threads or file descriptors when the parent is busy.
+- **Cold startup** no longer performs duplicate remote settings fetches.
+- **Compaction failures** due to context size now degrade input instead of retrying identically.
+- **--sandbox strict** now restricts writes to ~/.grok/sessions only.
+- **Subagent spawning** now waits longer on a busy coordinator and shows clearer retry guidance instead of "unreachable".
+- **Failed task and todo tool calls** now appear in the transcript instead of disappearing without a trace.
+- **Composer status row** no longer collapses or flashes when using double-Enter to send now.
+- **Session close** is no longer delayed by a single slow hook; each SessionEnd hook now has its own timeout.
+- **Hook removal** in the extensions modal no longer offers actions that the handler will refuse.
+- **Interjections** during a turn are now delivered atomically or not at all.
+- **Subagent tasks** no longer get incorrectly cancelled when the parent session is waiting for completion.
+- **Workflow detail view** now closes the overlay on X or outside click instead of returning to the run list.
+- **Resuming subagents** now succeeds for larger transcripts that still fit the model context with headroom.
+
+## Performance
+
+- **Startup** now fetches remote settings only once per boot instead of potentially twice.
+- **First message** on large repositories no longer waits on repository status scan.
+- **Large session memory** no longer blocks the agent during turn completion or subagent spawning.
+- **Signed-in CLI starts** faster by serving remote settings from a local cache on warm boots.
+
 
 # 1.0.13 — 2026-08-28
 
