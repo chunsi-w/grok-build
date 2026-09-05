@@ -50,6 +50,7 @@
 | 启动禁用官方自动更新 | `pager-bin` `should_check_for_updates` 恒 false; `auto_update::run_update_if_available` / background check 本地 noop | 启动不检查不下载; 手动 `grok update` 路径可另议 |
 | 启动 UI 精简 | `local_ui::{suppress_announcements,suppress_changelog,suppress_logo}` | 非 test 构建隐藏公告/changelog/点阵 logo |
 | Hook soft-warn / hookify | `decision_parse` / `dispatcher` / `result`; `runner/command.rs` Observe 解析 stdout JSON; PostToolUse 回传模型 + TUI HookAnnotation | block 拦, warn 放行并让模型/TUI 读到提示. 禁 Observe 直接 Success 丢 JSON |
+| Hook warn/block TUI 红字 | `pager` `session_event.rs` `HookAnnotation` 必须 `theme.accent_error` (正文+侧条); 单测 `hook_annotation_renders_red_not_muted` | **warn 和 block 都要在 CLI 红字可见, 禁 muted 灰字.** 合上游时禁整文件吃掉这段; CompactStarted 等新变体只补枚举, 不覆盖红色渲染. v1.20.2 的 3fe74d81 曾冲掉, 禁止再犯 |
 | `[ui].language` / `GROK_LANGUAGE` | shared ui_config + shell resolve/user_message/prompt | 沟通/标题/commit 等生成文案语言 |
 | Tasks 面板位置 | `views/agent.rs` 布局: scrollback 下, prompt 上 | 不跟上游若改回顶部 |
 | 会话标题左对齐 | `prompt_widget` 顶边 title | 不跟上游若改回右对齐 |
@@ -71,12 +72,12 @@
 ### 与上游的设计分歧 (不是 merge 打不过, 是长期策略)
 
 1. **自动更新**: 上游启动可检查/可装; 本地发行启动路径硬关. 合入后复查 `auto_update.rs` 与 `main.rs` 门控是否仍短路.
-2. **版本号**: 上游如 1.0.10; 本地产品号继续 1.20.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
+2. **版本号**: 上游如 1.0.13; 本地产品号继续 1.21.x 独立递增. Changelog 可同时收录上游段落与本地 1.x 段落.
 3. **欢迎 Changelog UI**: 上游写 release notes 文案; 本地 `suppress_changelog` 仍隐藏展示, 文案可进仓库.
 
-### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV 70ec060e)
+### 无冲突可直接吃进的上游能力 (示例 SOURCE_REV d761e8ba)
 
-UserPromptSubmit 阻塞门 + hook 网关重构 (run prompt gate before chat-state commit, block 后 hold 队列); 身份戳 + runtime 从 chat store 重水合; auto 模式放行 mkdir/touch; headless 会话默认 always-allow; websocket crates 统一 0.28; sandbox 规范化 socket mask + Devbox 强制 bubblewrap; 旧模型 slug 重定向 grok-4.6; voice 在 Ubuntu 22.04 回退; computer-hub bot relay 连接管理; 自定义插件市场; /minimal 进程内切换; workflow 子代理 effort/agent_budget. 与上表正交.
+UserPromptSubmit 阻塞门 + hook 网关重构 (run prompt gate before chat-state commit, block 后 hold 队列); 身份戳 + runtime 从 chat store 重水合; auto 模式放行 mkdir/touch; headless 会话默认 always-allow; websocket crates 统一 0.28; sandbox 规范化 socket mask + Devbox 强制 bubblewrap; 旧模型 slug 重定向 grok-4.6; voice 在 Ubuntu 22.04 回退; computer-hub bot relay 连接管理; 自定义插件市场; /minimal 进程内切换; workflow 子代理 effort/agent_budget; 安全修复 (Write/Edit symlink deny 绕过, GROK_CHANNEL 注入 RCE); panel dock 聚合面板 (GROK_DOCK_V2 默认关); effort 设置取代多模型变体; hooks 客户端 PostToolUse delivery 流 (本地 Observe stdout JSON 语义经 dispatch_post_tool_use_hook 保留); PostToolUseFailure 事件; 启动 settings 缓存 + 仓库状态预取 (RepoStatusSnapshot); ripgrep 压缩打包. 与上表正交.
 
 
 ## fork 回归测试 (走 CI; 本机不跑 cargo)

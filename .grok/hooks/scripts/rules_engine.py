@@ -253,6 +253,54 @@ def _fixture_rules_dir() -> Path:
     return Path(__file__).resolve().parent.parent / "fixtures" / "rules"
 
 
+def installed_rules_check() -> List[str]:
+    """装机自检: 本机 ~/.claude 存在时, hookify 链路必须完整.
+
+    - hookify 插件在 [plugins].enabled 中 (config.toml 存在时)
+    - 关键规则在位且可解析: 中文标点 warn 兜底 + type-cast/FQCN block (pre)
+    运行时规则真源是 ~/.claude/hookify.*.local.md (Claude Code hookify 兼容),
+    由 hookify 插件 hooks/hooks.json 自动注册执行, 无需手工注册.
+    CI/新机器无 ~/.claude 时跳过.
+    """
+    problems: List[str] = []
+    claude_dir = Path.home() / ".claude"
+    if not claude_dir.is_dir():
+        return problems
+    config_toml = Path.home() / ".grok" / "config.toml"
+    if config_toml.is_file():
+        try:
+            toml_text = config_toml.read_text(encoding="utf-8")
+        except OSError:
+            toml_text = ""
+        enabled_block = re.search(r"enabled\s*=\s*\[(.*?)\]", toml_text, re.DOTALL)
+        enabled_items = re.findall(r'"([^"]+)"', enabled_block.group(1)) if enabled_block else []
+        if "hookify" not in enabled_items:
+            problems.append("hookify plugin missing from [plugins].enabled in config.toml")
+    required_rules = {
+        "hookify.chinese-punctuation-warning.local.md": "warn-chinese-punctuation",
+        "hookify.block-php-type-cast-pre.local.md": "block-php-type-cast-pre",
+        "hookify.block-php-inline-fqcn-pre.local.md": "block-php-inline-fqcn-pre",
+    }
+    for fname, expect_name in required_rules.items():
+        rule_file = claude_dir / fname
+        if not rule_file.is_file():
+            problems.append(f"missing {rule_file} (hookify 插件规则真源断链)")
+            continue
+        try:
+            text = rule_file.read_text(encoding="utf-8")
+        except OSError as e:
+            problems.append(f"unreadable {rule_file}: {e}")
+            continue
+        fm, _ = _parse_frontmatter(text)
+        rule = _rule_from_fm(fm, "")
+        if rule is None or rule.name != expect_name:
+            got = rule.name if rule is not None else "unparsed"
+            problems.append(f"{rule_file} parse failed, name={got}")
+        elif not rule.enabled:
+            problems.append(f"{rule_file} disabled")
+    return problems
+
+
 def self_test() -> int:
     """回归: 中文标点 soft-warn / GitHub 禁爬虫与 curl / gh 放行.
 
@@ -435,6 +483,11 @@ def self_test() -> int:
         },
         "deny",
     )
+
+    # --- 装机自检: 规则真源断链在这一环, 组件测试测不到 ---
+    for problem in installed_rules_check():
+        failures += 1
+        print(f"FAIL installed-rules: {problem}")
 
     total = 12
     # count checks dynamically via failures only; print summary

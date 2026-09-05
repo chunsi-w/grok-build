@@ -1,34 +1,27 @@
-# project-rules (真源)
+# hookify 规则资产 (回归自检用)
 
-Claude Code hookify 规则兼容. 本目录是真源, `~/.grok/hooks/` 通过软链接映射到这里.
+Claude Code hookify 插件兼容. 运行时不注册任何本地 JSON hook, 规则执行完全走
+Claude Code 生态的 hookify 插件 (Grok 经 plugins.paths 加载, 同一插件两侧通用).
 
-规则目录:
-- `~/.claude/hookify.*.local.md`
-- `<项目>/.claude/hookify.*.local.md`
+## 运行时链路 (Claude Code 兼容)
 
-入口: `project-rules.json` -> `scripts/rules_engine.py`
+- 规则真源: `~/.claude/hookify.*.local.md` 与 `<项目>/.claude/hookify.*.local.md`
+- 执行者: hookify 插件 `hooks/hooks.json` (PreToolUse/PostToolUse/Stop/UserPromptSubmit/SubagentStart)
+- 插件启用即在会话自动注册, 无需任何手工软链或 mv
+- 改规则文件即时生效; 插件自身改动需新开会话
 
-## 软链接到全局
+## 本目录资产
 
-在仓库根目录执行:
-
-```fish
-mkdir -p ~/.grok/hooks && ln -sfn (pwd)/.grok/hooks/project-rules.json ~/.grok/hooks/project-rules.json && ln -sfn (pwd)/.grok/hooks/scripts ~/.grok/hooks/scripts && ln -sfn (pwd)/.grok/hooks/README.md ~/.grok/hooks/README.md
-```
-
-说明:
-- Grok 扫描 `*.json` 时会跟随软链接
-- 全局与项目若加载到同一 command, 会按内容去重, 只跑全局那份
-- 改这里的文件后, 需新开 Grok 会话才生效
+- `scripts/rules_engine.py`: fork 回归引擎, 只用于自检与 Rust 回归测试, 不注册运行时
+- `fixtures/rules/`: 固定规则副本, 供自检使用, 不依赖 `~/.claude`
 
 ## 回归自测
 
 ```sh
-# 规则引擎: 中文标点 soft-warn, github 禁爬虫/curl, gh 放行 (用 fixtures/rules)
+# 规则引擎: 中文标点 soft-warn, github 禁爬虫/curl, gh 放行
+# 装机自检: ~/.claude 存在时, 中文标点规则必须在位
 python3 .grok/hooks/scripts/rules_engine.py --self-test
 
 # 也可经 cargo 锁协议 + 脚本 (合并上游后必跑)
 cargo test -p xai-grok-hooks local_fork
 ```
-
-fixture 目录: `fixtures/rules/` (仓库内固定规则副本, 不依赖 `~/.claude`).

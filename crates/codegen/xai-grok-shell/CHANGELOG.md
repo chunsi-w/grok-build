@@ -1,3 +1,233 @@
+# 1.22.0 - 2026-09-05
+
+## Features
+
+- **同步上游 monorepo 1.0.16** (`SOURCE_REV` a549186d): MCP 2026-07-28 elicitation 多轮请求; 会话 bind 时注入 MCP; 托管 MCP/插件/市场 policy 引擎; 企业 signed `requirements.toml` 锁定可选模型; ACP `session/set_config_option`; 启动期 Enter 和弦保留; get-output 等待上限 1h; compaction 后重注入 scheduled loops / live workflows; 子代理 spawn 完成前不误失败发送; MCP OAuth 死锁修复; dock 输入与 feature flag 修复; 采样通道与 auth refresh 预热.
+- 本地设计保留不变 (关自动更新 / 启动 UI / soft-warn / language / 去 Sentry 等).
+
+## Notes
+
+- 产品版本继续走本地 1.x; 上游锁步号 1.0.16, SOURCE_REV 推进.
+
+# 1.21.0 - 2026-09-01
+
+## Features
+
+- **同步上游 monorepo 1.0.13** (`SOURCE_REV` d761e8ba): 安全修复 Write/Edit 经仓库 symlink 绕过 deny 规则与 GROK_CHANNEL 注入 config.toml 的持久 RCE; panel dock 聚合面板 (gated); effort 设置取代多模型变体; hooks 客户端 PostToolUse 反馈与上下文; PostToolUseFailure 事件; 启动 settings 缓存与仓库状态预取; ripgrep 压缩打包.
+- **语言指令覆盖工具调用参数**: `<language>` 明确 `description`/`prompt`/`task` 等自然语言工具参数用配置语言书写 (1.20.7 后补).
+- **PostToolUse 重构接上游 delivery 流**: 内联分发迁移至 `dispatch_post_tool_use_hook` + `PostToolUseDelivery`, Observe stdout JSON 语义 (parse_observe_result) 保留并回归测试.
+
+## Notes
+
+- 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn+hookify / language / Tasks 面板位置 / 会话标题左对齐 / 无 Sentry / 明文提示词.
+- 产品版本 1.21.0; 上游锁步号 1.0.13.
+
+# 1.0.16 — 2026-09-01
+
+## Breaking Changes
+
+- **Enterprise policies** can now restrict which models users may select via signed requirements.toml.
+
+## Features
+
+- **MCP servers** can now be supplied at session bind time for workspace integrations.
+
+## Bug Fixes
+
+- **Long-running sessions** interrupted by expired tokens during network issues no longer lose work.
+- **Slash command suggestions** with very long names no longer show blank labels in the dropdown.
+- **Sending a message immediately after spawning a subagent** no longer fails while the child is still starting.
+- **Loading spinners** inside the extensions modal (/mcps and other tabs) now animate correctly.
+- **MCP server OAuth authentication** triggered from /mcps no longer deadlocks the session.
+
+## Performance
+
+- **Long-running subagent and task output waits** now default to a one-hour ceiling instead of ten minutes.
+
+
+# 1.0.15 — 2026-08-31
+
+## Features
+
+- **Tip appears** after repeated scrollback drag-copies suggesting /copy and /export commands.
+
+## Bug Fixes
+
+- **Session close** is now faster because memory consolidation runs at the next launch instead of blocking exit.
+- **Typed input including Enter** during pager startup is now preserved and correctly interpreted as submit or newline.
+- **Dock panel** input and rollout now respect remote settings and correctly handle keyboard focus when hidden or empty.
+
+## Performance
+
+- **First reply latency** is reduced by opening the model connection in the background when a session starts.
+- **Signed-in startup** is faster because an expired token refresh now begins in the background at agent spawn.
+- **Creating a new session** returns faster; MCP tools and other startup work happen in the background.
+
+
+# 1.0.14 — 2026-08-31
+
+## Features
+
+- **OIDC token refresh** is now proactive by default for better reliability.
+- **PostToolUse hooks** can now provide feedback and context to the model after tool execution.
+- **SDK-registered PostToolUse hooks** now provide model-facing feedback.
+- **grok usage <session-id>** now shows persisted per-turn token and cost data.
+- **Retry status** in composer and title now shows a short reason for the retry.
+- **Models can now declare** a different identifier for each reasoning-effort level instead of always sending the same id.
+- **Prompt suggestions** now respect remote configuration and default to the current session model.
+- **Windows CLI downloads** are now ~70% smaller using the same compressed sidecars as macOS and Linux.
+
+## Bug Fixes
+
+- **grok inspect** now correctly shows Claude bypass locks as advisory rather than enforced.
+- **Subagent sessions** no longer leak threads or file descriptors when the parent is busy.
+- **Cold startup** no longer performs duplicate remote settings fetches.
+- **Compaction failures** due to context size now degrade input instead of retrying identically.
+- **--sandbox strict** now restricts writes to ~/.grok/sessions only.
+- **Subagent spawning** now waits longer on a busy coordinator and shows clearer retry guidance instead of "unreachable".
+- **Failed task and todo tool calls** now appear in the transcript instead of disappearing without a trace.
+- **Composer status row** no longer collapses or flashes when using double-Enter to send now.
+- **Session close** is no longer delayed by a single slow hook; each SessionEnd hook now has its own timeout.
+- **Hook removal** in the extensions modal no longer offers actions that the handler will refuse.
+- **Interjections** during a turn are now delivered atomically or not at all.
+- **Subagent tasks** no longer get incorrectly cancelled when the parent session is waiting for completion.
+- **Workflow detail view** now closes the overlay on X or outside click instead of returning to the run list.
+- **Resuming subagents** now succeeds for larger transcripts that still fit the model context with headroom.
+
+## Performance
+
+- **Startup** now fetches remote settings only once per boot instead of potentially twice.
+- **First message** on large repositories no longer waits on repository status scan.
+- **Large session memory** no longer blocks the agent during turn completion or subagent spawning.
+- **Signed-in CLI starts** faster by serving remote settings from a local cache on warm boots.
+
+
+# 1.0.13 — 2026-08-28
+
+## Features
+
+- **Length-truncated responses** now continue automatically instead of failing the turn.
+- **Hooks** can now ask the user to confirm a tool call instead of always allowing or denying.
+- **Hooks** can now request deferral or add context shown to the model after a tool runs.
+- **Session close** now records detailed timing data for performance analysis.
+- **Credit limit upsell** now offers a Try Again button to retry the last prompt.
+- **Pasted images** now show a live pixel preview in the prompt box on iTerm2.
+
+## Bug Fixes
+
+- **Transient inference failures** (stalls, drops, 5xx) now retry automatically instead of ending the turn.
+- **Windows users** can now correctly open ~/.grok and worktree sessions.
+- **Session data** is now more reliably saved after prompts and on power loss.
+- **Compaction failures** now show the actual error instead of a generic message.
+- **Truncation error messages** now show the right guidance instead of suggesting an unhelpful retry.
+- **Truncated tool calls** are now executed instead of failing the turn when arguments are complete.
+- **Images larger than 2000px** no longer brick sessions on many-image requests.
+- **Wrapped hyperlinks** in the pager now remain fully clickable on Windows Terminal instead of only the first line.
+- **Recurring scheduled tasks** now include a reminder to stop the monitor when work finishes.
+- **Scheduled task IDs** are now full UUID strings, preventing collisions when tasks are created in the same millisecond.
+
+## Performance
+
+- **Subagent spawning** is faster when connections drop during bursts.
+- **Session startup** with MCP servers is now much faster when auth is already configured.
+- **MCP server startup** no longer stalls behind a fixed batch size.
+- **CLI downloads** are now compressed, making fresh installs and updates substantially faster.
+
+
+# 1.0.12 — 2026-08-27
+
+## Features
+
+- **Credit-limit upsell** now includes a Try Again option. Max-tier users see the same question modal without Upgrade tier.
+
+## Bug Fixes
+
+- **Copying wrapped table cells** no longer inserts unwanted spaces at line breaks.
+- **MCP server connections** that fail transiently now retry instead of staying unavailable.
+- **Waiting on subagents** after an interjection no longer blocks on unrelated background work.
+- **Prompt blocks** now show friendly hook descriptions instead of internal IDs.
+- **Truncation error message** no longer suggests asking for a shorter answer.
+- **Context estimates** for conversations with reasoning are now more accurate.
+- **Token usage** after rewinding or switching modes now matches the actual server-reported count instead of overestimating.
+- **Context bar** now updates immediately when auto-compaction begins instead of waiting until it finishes.
+- **File system monitoring** for .NET projects no longer creates excessive watchers on Linux.
+- **Auto recap** no longer appears while a background task or monitor wake turn is streaming.
+
+## Performance
+
+- **Worktree creation** is faster by skipping stale reflog copies.
+
+# 1.20.7 - 2026-09-01
+
+## Changed
+
+- 系统提示词 `<code_discipline>` 新增: 代码校验和检查优先用 ast-grep (`sg`) 按语法树定位与核对结构, 规则检查走 `ast-grep scan`; 文本 grep/正则不得替代结构级校验 (grep 匹配字符串, sg 匹配结构).
+
+## Notes
+
+- 上游无新提交 (领先 0), 本版仅含本地提示词变更.
+- 产品版本 1.20.7.
+
+# 1.20.6 - 2026-08-31
+
+## Bug Fixes
+
+- PostToolUse 等 Observe gate 恢复解析 stdout JSON: exit 0 的 soft-warn additionalContext 不再被丢弃, deny/block reason 兜底进 systemMessage.
+- PostToolUse 结果回传模型: command 类 hookify 规则 (sg/slither) 的警告现在进模型上下文与 TUI, 不再静默.
+
+## Notes
+
+- 仅 grok-cli 侧 hook 链路适配, 不改 hookify 插件评估逻辑; Claude Code 语义不变.
+- 产品版本 1.20.6.
+
+# 1.20.5 - 2026-08-30
+
+## Bug Fixes
+
+- 恢复 HookAnnotation 红色 TUI: warn 和 block 都在 CLI 用 accent_error 显示, 不再 muted 灰到看不见 (3fe74d81 合上游冲掉).
+
+## Notes
+
+- 合上游门控已记: Claude.md + sop-upstream-sync-release.md, 禁再整文件覆盖 session_event 红色渲染.
+
+# 1.20.4 - 2026-08-30
+
+## Changed
+
+- 提示词: 用户说 "重新测试" / 新开会话再测, 一律指当前会话用 write 测 hookify 中文标点拦截是否弹出 additionalContext, 禁 headless/假信封顶替.
+
+## Notes
+
+- 仅提示词与版本号.
+
+# 1.20.3 - 2026-08-30
+
+## Changed
+
+- 系统提示词对齐全局规则 (`plugins/a/CLAUDE.md`): 新增 `<factual_verification>` (未复现不得称确认; 测试必须打真实入口); 强化 mindset/code_discipline/collaboration/output_efficiency (ast-grep 沉淀, 语音专名, mermaid, 更优做法一句).
+
+## Notes
+
+- 仅提示词与版本号, 无 Rust 逻辑/依赖变更.
+- 产品版本 1.20.3.
+
+# 1.20.2 - 2026-08-30
+
+## Bug Fixes
+
+- **插件 hooks 冷启动注册修复**: 会话启动时未将插件 hooks 装入注册表 (仅 /plugins reload 路径挂载), hookify 拦截在冷启动会话静默失效; 现启动即并入, 与 reload 同一套逻辑.
+- hookify 插件 Grok 适配回归: warn 不再转 deny+代写文件, 保持 Claude Code 语义 (放行 + additionalContext 提示); block 规则仍 deny.
+
+## Features
+
+- **同步上游 monorepo 1.0.12** (`SOURCE_REV` bc7f02ed): SessionStart hook 持久化沙箱安全修复; scheduler 任务 UUID 保全与已完成循环任务停止; 安装包 zstd/gzip 压缩分发; 瞬态采样失败重试; pager input/search 移入 render crate 等.
+
+## Notes
+
+- 废弃 `~/.grok/hooks/project-rules.json` 手工软链注册机制, 规则执行统一走 hookify 插件链 (Claude Code 兼容); rules_engine.py 降级为回归自检资产, 装机自检覆盖插件启用与关键规则在位.
+- 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn+hookify / language / 无 Sentry / 标题左对齐.
+- 产品版本继续走本地 1.x; 上游锁步号 1.0.12.
+
 # Changelog
 
 # 1.20.1 — 2026-08-28
@@ -50,7 +280,7 @@
 
 - 本地设计保留不变: tasks 面板仍在 scrollback 下 prompt 上 (已移植到上游新 `AgentViewLayoutParams` 布局并补回归测试); 关自动更新 / soft-warn / language / 去 Sentry / 明文提示词等未动.
 - 产品版本继续走本地 1.x; 上游锁步号 1.0.6.
-=======
+
 # 1.0.10 — 2026-08-24
 
 ## Performance
