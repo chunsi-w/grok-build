@@ -299,6 +299,8 @@ struct AgentLoadOutcome {
     /// client is driving mid-reconnect, adopted at finalize (mirrors the
     /// `SessionLoaded` adoption in `dispatch.rs`).
     running_prompt_id: Option<String>,
+    /// Persistent-memory implementation pinned by the re-spawned actor.
+    memory_mode: Option<xai_grok_shell::config::MemoryMode>,
 }
 
 /// Fields of the reconnect `session/load`, derived from the agent being
@@ -353,24 +355,21 @@ fn plan_reconnect_load(
     })
 }
 
-/// Resolve the two post-reconnect restore outcomes from the per-agent
-/// `session/load` results.
-///
-/// - `all_restored` (AND across every reloaded tab, plus `init_ok`) drives the
-///   user-facing toast: it reports whether the WHOLE reconnect came back.
-/// - `active_restored` is per-agent: the ACTIVE tab's OWN reload succeeded. It
-///   gates that tab's post-reconnect queue drain. Gating the drain on
-///   `all_restored` would let one failed background tab strand prompts queued
-///   on a healthy active tab — the drain (`dispatch_drain_queue`) only ever
-///   touches the active agent, so a background failure has no bearing on it.
-///
-/// `loads` maps each reloaded agent to `(success, running_prompt_id)`; an agent
-/// in `pending_agent_ids` but absent from `loads` is treated as failed
-/// (mirrors the `unwrap_or((false, _))` at the finalize site).
+/// Gating the drain on `all_restored` would let one failed background tab strand prompts queued on a healthy active tab.
+/// The drain (`dispatch_drain_queue`) only ever touches the active agent, so a background failure has no bearing on it.
+/// `loads` maps each reloaded agent to `(success, running_prompt_id, memory_mode)`.
+/// An agent in `pending_agent_ids` but absent from `loads` is treated as failed (mirrors the `unwrap_or((false, _))` at the finalize site).
 fn reconnect_restore_outcome(
     init_ok: bool,
     pending_agent_ids: &[super::agent::AgentId],
-    loads: &std::collections::HashMap<super::agent::AgentId, (bool, Option<String>)>,
+    loads: &std::collections::HashMap<
+        super::agent::AgentId,
+        (
+            bool,
+            Option<String>,
+            Option<xai_grok_shell::config::MemoryMode>,
+        ),
+    >,
     active_agent_id: Option<super::agent::AgentId>,
 ) -> (bool, bool) {
     let load_ok =
@@ -2097,6 +2096,7 @@ pub(crate) async fn run(
     // Animation tick: only scheduled when there are running entries.
     let mut tick_interval = tick_interval;
     let mut animation_tick_at: Option<Instant> = None;
+    let ack_deadlines = crate::app::prompt_ack::PromptAckDeadlines::from_process_env();
 
     // Whether the extra Kitty keyboard layer (WASD release events) is
     // currently pushed for the /gboom game. Synced to `gboom_active` each
@@ -3092,10 +3092,17 @@ pub(crate) async fn run(
                 {
                     break;
                 }
-                // Lost-response recovery: finish any turn whose
-                // `prompt_complete` broadcast outlived the grace window
-                // without its `session/prompt` RPC response arriving
-                // (see `dispatch::reconcile_overdue_turn_ends`).
+                // Unacknowledged-prompt recovery (see `dispatch::reconcile_overdue_prompt_acks`)
+                if let Some(effs) =
+                    dispatch::reconcile_overdue_prompt_acks(&mut app, &ack_deadlines)
+                {
+                    if process_effects(effs, &mut tasks, &mut app, &progress_tx) {
+                        break;
+                    }
+                    presenter.request(false);
+                }
+                // Lost-response recovery (see `dispatch::reconcile_overdue_turn_ends`)
+                // Finish any turn whose `prompt_complete` broadcast outlived the grace window without its `session/prompt` RPC response arriving
                 let reconciled = dispatch::reconcile_overdue_turn_ends(&mut app);
                 if let Some(effs) = reconciled {
                     if process_effects(effs, &mut tasks, &mut app, &progress_tx) {
@@ -3394,7 +3401,17 @@ pub(crate) async fn run(
                             // load outcomes with the optional mid-turn running
                             // prompt id from each reload response.
                             let ok = tokio::time::timeout(timeout, async {
-                                let init_req = acp::InitializeRequest::new(acp::ProtocolVersion::V1).client_capabilities(acp::ClientCapabilities::new().fs(acp::FileSystemCapabilities::new()).terminal(false)).meta(serde_json::json!({
+                                let mut echo_meta = serde_json::Map::new();
+                                echo_meta.insert(
+                                    xai_grok_shell::session::USER_MESSAGE_ECHO_CAPABILITY.to_owned(),
+                                    serde_json::Value::Bool(true),
+                                );
+                                let init_req = acp::InitializeRequest::new(acp::ProtocolVersion::V1).client_capabilities(
+                                    acp::ClientCapabilities::new()
+                                        .fs(acp::FileSystemCapabilities::new())
+                                        .terminal(false)
+                                        .meta(Some(echo_meta)),
+                                ).meta(serde_json::json!({
                                         "clientType": PAGER_CLIENT_TYPE,
                                         "clientVersion": PAGER_CLIENT_VERSION,
                                     }).as_object().cloned());
@@ -3421,6 +3438,10 @@ pub(crate) async fn run(
                                                     effects::parse_session_load_running_prompt_id(
                                                         resp.meta.as_ref(),
                                                     ),
+                                                memory_mode:
+                                                    effects::parse_session_memory_mode(
+                                                        resp.meta.as_ref(),
+                                                    ),
                                             });
                                         }
                                         Err(e) => {
@@ -3431,6 +3452,7 @@ pub(crate) async fn run(
                                                 agent_id,
                                                 success: false,
                                                 running_prompt_id: None,
+                                                memory_mode: None,
                                             });
                                         }
                                     }
@@ -3509,7 +3531,11 @@ pub(crate) async fn run(
                     .map(|l| {
                         (
                             l.agent_id,
-                            (l.success, l.running_prompt_id),
+                            (
+                                l.success,
+                                l.running_prompt_id,
+                                l.memory_mode,
+                            ),
                         )
                     })
                     .collect();
@@ -3527,8 +3553,12 @@ pub(crate) async fn run(
                 );
                 restore_dashboard_peek_before_reload(&mut app.dashboard, &mut app.agents);
                 for id in &pending.agent_ids {
-                    let (ok, running_prompt_id) = loads.remove(id).unwrap_or((false, None));
+                    let (ok, running_prompt_id, memory_mode) =
+                        loads.remove(id).unwrap_or((false, None, None));
                     if let Some(agent) = app.agents.get_mut(id) {
+                        if ok {
+                            agent.memory_mode = memory_mode;
+                        }
                         agent.finalize_reload_and_maybe_adopt(
                             pending.generation,
                             ok,
@@ -5731,8 +5761,8 @@ mod tests {
         let active = AgentId(0);
         let background = AgentId(1);
         let mut loads = std::collections::HashMap::new();
-        loads.insert(active, (true, None));
-        loads.insert(background, (false, None));
+        loads.insert(active, (true, None, None));
+        loads.insert(background, (false, None, None));
         let pending = vec![active, background];
 
         let (all_restored, active_restored) =
@@ -5755,8 +5785,8 @@ mod tests {
         let active = AgentId(0);
         let background = AgentId(1);
         let mut loads = std::collections::HashMap::new();
-        loads.insert(active, (false, None));
-        loads.insert(background, (true, None));
+        loads.insert(active, (false, None, None));
+        loads.insert(background, (true, None, None));
         let pending = vec![active, background];
 
         let (all_restored, active_restored) =
@@ -5775,7 +5805,7 @@ mod tests {
         use super::super::agent::AgentId;
         let active = AgentId(0);
         let mut loads = std::collections::HashMap::new();
-        loads.insert(active, (true, None));
+        loads.insert(active, (true, None, None));
         let pending = vec![active];
 
         let (all_restored, active_restored) =
@@ -5805,7 +5835,7 @@ mod tests {
         use super::super::agent::AgentId;
         let background = AgentId(1);
         let mut loads = std::collections::HashMap::new();
-        loads.insert(background, (true, None));
+        loads.insert(background, (true, None, None));
         let pending = vec![background];
 
         let (all_restored, active_restored) =

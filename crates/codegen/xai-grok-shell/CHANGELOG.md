@@ -1,3 +1,21 @@
+# 1.24.0 - 2026-09-14
+
+## Features
+
+- **同步上游 monorepo 1.0.24 增量** (`SOURCE_REV` c4ea71cf, 上游锁步号未再递增): durable v2 memory (observation capture + 文件系统契约), MCP 启动归属收口, workflow run 可被 agent 暂停/停止, prompt 未确认时的 fail-safe 恢复, 启动缓存与 settings 预取修复, hooks UI 重构 (成功静默 / block 时状态行 / 失败单行).
+- 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn + hookify (`decision_parse` + Observe stdout JSON) / HookAnnotation 红字 / language / 标题左对齐 / 无 Sentry.
+
+## Fixes
+
+- **修 1.23.0 合并残留**: `xai-grok-hooks/tests/integration.rs` 曾调用不存在的 `HookDecision::allow()` 与 `Vec<HookRunResult>::results`, 并删掉 4 个上游用例; 现取回上游用例 (11 个) 并修正 API, 本地 `hook_fail_open_on_timeout` 保留.
+- `local_fork_regression.rs` 的 `RunContext` 字面量补齐 `process_scope` / `disabled` 字段 (此前该 cfg(test) 目标从未编译过).
+- `prompt.md` memory 段门控改为 `memory_v2_enabled or memory_enabled`, 同时满足官方 v2 用例与本地用例.
+- 上游删除 `scrollback/blocks/tool/hook.rs` (hook 渲染改走 session 级), 本地该文件随之删除; `HookAnnotation` 红字渲染与单测保留.
+
+## Notes
+
+- 产品版本本地 1.x 次版本递增; 上游锁步号 1.0.24, SOURCE_REV 推进.
+
 # 1.23.5 - 2026-09-12
 
 ## Features

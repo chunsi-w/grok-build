@@ -395,6 +395,8 @@ print("ok")
         let ctx = RunContext {
             session_id: "test-session",
             workspace_root: tmp.path().to_str().expect("utf8 path"),
+            process_scope: None,
+            disabled: Default::default(),
         };
         let pre = dispatch_pre_tool_use(&registry, &envelope, &ctx).await;
         match pre.decision {
@@ -475,6 +477,8 @@ print("ok")
         let ctx = RunContext {
             session_id: "test-session",
             workspace_root: tmp.path().to_str().expect("utf8"),
+            process_scope: None,
+            disabled: Default::default(),
         };
         let pre = dispatch_pre_tool_use(&registry, &envelope, &ctx).await;
         assert!(
@@ -541,6 +545,7 @@ print("ok")
             session_id: "test-session",
             workspace_root: "/tmp",
             process_scope: None,
+            disabled: Default::default(),
         };
         let out = dispatch_non_blocking(
             &registry,

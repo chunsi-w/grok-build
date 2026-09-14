@@ -70,6 +70,7 @@ async fn hook_deny_via_exit_code_only() {
         session_id: "test",
         workspace_root: dir.path().to_str().unwrap(),
         process_scope: None,
+        disabled: Default::default(),
     };
 
     let pre_result =
@@ -100,6 +101,7 @@ async fn hook_fail_open_on_crash() {
         session_id: "test",
         workspace_root: dir.path().to_str().unwrap(),
         process_scope: None,
+        disabled: Default::default(),
     };
 
     let pre_result =
@@ -107,7 +109,7 @@ async fn hook_fail_open_on_crash() {
             .await;
     assert_eq!(
         pre_result.decision,
-        HookDecision::allow(),
+        HookDecision::Allow,
         "fail-open: a crashing hook must not block the tool call"
     );
     assert_eq!(
@@ -134,6 +136,115 @@ async fn hook_fail_open_on_timeout() {
         session_id: "test",
         workspace_root: dir.path().to_str().unwrap(),
         process_scope: None,
+        disabled: Default::default(),
+    };
+
+    let pre_result = dispatcher::dispatch_pre_tool_use(
+        &registry,
+        &pre_tool_use_envelope("run_terminal_cmd"),
+        &ctx,
+    )
+    .await;
+    assert!(matches!(pre_result.decision, HookDecision::Deny { .. }));
+
+    let pre_result =
+        dispatcher::dispatch_pre_tool_use(&registry, &pre_tool_use_envelope("read_file"), &ctx)
+            .await;
+    assert_eq!(pre_result.decision, HookDecision::Allow);
+}
+
+#[tokio::test]
+async fn non_blocking_dispatch() {
+    let dir = tempfile::tempdir().unwrap();
+
+    write_hook(
+        dir.path(),
+        "lifecycle.json",
+        r#"{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo session started"}]}]}}"#,
+    );
+
+    let (registry, errors) = load_hooks(Some(dir.path()), None);
+    assert!(errors.is_empty());
+
+    let ctx = RunContext {
+        session_id: "test",
+        workspace_root: dir.path().to_str().unwrap(),
+        process_scope: None,
+        disabled: Default::default(),
+    };
+
+    let results = dispatcher::dispatch_non_blocking(
+        &registry,
+        HookEventName::SessionStart,
+        &session_start_envelope(),
+        &ctx,
+    )
+    .await;
+
+    assert_eq!(results.len(), 1);
+    assert!(matches!(
+        &results[0],
+        xai_grok_hooks::result::HookRunResult::Success { .. }
+    ));
+}
+
+#[tokio::test]
+async fn first_deny_stops_chain() {
+    let dir = tempfile::tempdir().unwrap();
+
+    write_hook(
+        dir.path(),
+        "01-deny.json",
+        r#"{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"echo '{\"decision\":\"deny\",\"reason\":\"first-deny\"}'; exit 2"}]}]}}"#,
+    );
+    write_hook(
+        dir.path(),
+        "02-allow.json",
+        r#"{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"echo '{\"decision\":\"allow\"}'"}]}]}}"#,
+    );
+
+    let (registry, errors) = load_hooks(Some(dir.path()), None);
+    assert!(errors.is_empty());
+
+    let ctx = RunContext {
+        session_id: "test",
+        workspace_root: dir.path().to_str().unwrap(),
+        process_scope: None,
+        disabled: Default::default(),
+    };
+
+    let pre_result = dispatcher::dispatch_pre_tool_use(
+        &registry,
+        &pre_tool_use_envelope("run_terminal_cmd"),
+        &ctx,
+    )
+    .await;
+    match pre_result.decision {
+        HookDecision::Deny { reason, .. } => {
+            assert_eq!(reason, "first-deny");
+        }
+        other => panic!("expected Deny, got {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn hook_receives_stdin_envelope() {
+    let dir = tempfile::tempdir().unwrap();
+
+    write_hook(
+        dir.path(),
+        "check.json",
+        r#"{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"INPUT=$(cat); echo \"$INPUT\" | grep -q '\"hookEventName\"' && echo \"$INPUT\" | grep -q '\"toolName\"' && echo \"$INPUT\" | grep -q '\"sessionId\"' && echo '{\"decision\":\"allow\"}' || echo '{\"decision\":\"deny\",\"reason\":\"missing fields\"}'"}]}]}}"#,
+    );
+
+    let (registry, errors) = load_hooks(Some(dir.path()), None);
+    assert!(errors.is_empty());
+
+    let ctx = RunContext {
+        session_id: "test-sess-123",
+        workspace_root: dir.path().to_str().unwrap(),
+        process_scope: None,
+        disabled: Default::default(),
     };
 
     let pre_result =
@@ -141,7 +252,7 @@ async fn hook_fail_open_on_timeout() {
             .await;
     assert_eq!(
         pre_result.decision,
-        HookDecision::allow(),
+        HookDecision::Allow,
         "fail-open: a timing-out hook must not block the tool call"
     );
 }
@@ -299,26 +410,27 @@ async fn new_event_types_fire_and_receive_correct_envelope() {
             session_id: "test",
             workspace_root: dir.path().to_str().unwrap(),
             process_scope: None,
+            disabled: Default::default(),
         };
 
-        let out =
+        let results =
             dispatcher::dispatch_non_blocking(&registry, case.event_name, &envelope, &ctx).await;
 
         assert_eq!(
-            out.results.len(),
+            results.len(),
             1,
             "{}: expected 1 result, got {}",
             case.json_key,
-            out.results.len()
+            results.len()
         );
         assert!(
             matches!(
-                &out.results[0],
+                &results[0],
                 xai_grok_hooks::result::HookRunResult::Success { .. }
             ),
             "{}: hook did not succeed: {:?}",
             case.json_key,
-            out.results[0]
+            results[0]
         );
 
         let raw = std::fs::read_to_string(&output_file)
@@ -383,12 +495,13 @@ async fn runner_injected_vars_override_extra_env_at_spawn() {
         session_id: real_session,
         workspace_root: real_workspace,
         process_scope: None,
+        disabled: Default::default(),
     };
 
     let result =
         dispatcher::dispatch_pre_tool_use(&registry, &pre_tool_use_envelope("read_file"), &ctx)
             .await;
-    assert_eq!(result.decision, HookDecision::allow());
+    assert_eq!(result.decision, HookDecision::Allow);
 
     let captured = std::fs::read_to_string(&output_file).unwrap();
     assert!(
@@ -497,13 +610,14 @@ async fn direct_exec_command_with_env_var_resolves_at_load_time() {
         session_id: "test",
         workspace_root: dir.path().to_str().unwrap(),
         process_scope: None,
+        disabled: Default::default(),
     };
     let result =
         dispatcher::dispatch_pre_tool_use(&registry, &pre_tool_use_envelope("read_file"), &ctx)
             .await;
     assert_eq!(
         result.decision,
-        HookDecision::allow(),
+        HookDecision::Allow,
         "direct-exec hook with env-var-resolved path must run, got {:?}",
         result.decision
     );
@@ -558,6 +672,7 @@ async fn http_hook_url_env_expansion_end_to_end() {
         session_id: "test",
         workspace_root: dir.path().to_str().unwrap(),
         process_scope: None,
+        disabled: Default::default(),
     };
     let pre_result =
         dispatcher::dispatch_pre_tool_use(&registry, &pre_tool_use_envelope("read_file"), &ctx)
@@ -566,7 +681,7 @@ async fn http_hook_url_env_expansion_end_to_end() {
     // The tool call is allowed; the failure is recorded for scrollback
     assert_eq!(
         pre_result.decision,
-        HookDecision::allow(),
+        HookDecision::Allow,
         "fail-open: SSRF-blocked HTTP hook must NOT block the tool call"
     );
     assert_eq!(pre_result.results.len(), 1);
@@ -638,6 +753,7 @@ async fn lenient_parsing_with_mixed_claude_events() {
         session_id: "test",
         workspace_root: dir.path().to_str().unwrap(),
         process_scope: None,
+        disabled: Default::default(),
     };
     let result = dispatcher::dispatch_pre_tool_use(
         &registry,
@@ -645,5 +761,5 @@ async fn lenient_parsing_with_mixed_claude_events() {
         &ctx,
     )
     .await;
-    assert_eq!(result.decision, HookDecision::allow());
+    assert_eq!(result.decision, HookDecision::Allow);
 }
