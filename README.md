@@ -32,10 +32,24 @@ language = "简体中文"    # 沟通/标题/commit 等生成文案语言; 也�
 
 ## 发版
 
-推送 `v*` 标签后, GitHub Actions 自动构建并上传 Release 产物.
+本机打包, 不经 CI:
 
 ```sh
-git tag v0.1.0
-git push origin v0.1.0
+cargo build --release --locked -p xai-grok-pager-bin --target aarch64-apple-darwin
+
+dist=dist/grok-aarch64-apple-darwin
+mkdir -p "$dist"
+cp target/aarch64-apple-darwin/release/xai-grok-pager "$dist/grok"
+chmod +x "$dist/grok"
+tar -czf "${dist}.tar.gz" -C dist grok-aarch64-apple-darwin
+```
+
+打 tag 并把本地产物挂到 Release (tag 本身不再触发构建):
+
+```sh
+git tag v1.24.0 && git push origin v1.24.0
+gh release create v1.24.0 --repo phpmac/grok-build --target main \
+  --title "<一句话中文主题>" --notes-file <变更说明> \
+  dist/grok-aarch64-apple-darwin.tar.gz
 ```
 
