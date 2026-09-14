@@ -120,13 +120,13 @@ async fn hook_fail_open_on_crash() {
 }
 
 #[tokio::test]
-async fn hook_fail_open_on_timeout() {
+async fn matcher_filters_tool_name() {
     let dir = tempfile::tempdir().unwrap();
 
     write_hook(
         dir.path(),
         "safety.json",
-        r#"{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"sleep 10","timeout":1}]}]}}"#,
+        r#"{"hooks":{"PreToolUse":[{"matcher":"run_terminal_cmd","hooks":[{"type":"command","command":"echo '{\"decision\":\"deny\",\"reason\":\"blocked\"}'; exit 2"}]}]}}"#,
     );
 
     let (registry, errors) = load_hooks(Some(dir.path()), None);
@@ -250,14 +250,9 @@ async fn hook_receives_stdin_envelope() {
     let pre_result =
         dispatcher::dispatch_pre_tool_use(&registry, &pre_tool_use_envelope("read_file"), &ctx)
             .await;
-    assert_eq!(
-        pre_result.decision,
-        HookDecision::Allow,
-        "fail-open: a timing-out hook must not block the tool call"
-    );
+    assert_eq!(pre_result.decision, HookDecision::Allow);
 }
 
-#[tokio::test]
 fn make_envelope(event: HookEventName, payload: HookPayload) -> HookEventEnvelope {
     HookEventEnvelope {
         hook_event_name: event,
@@ -762,4 +757,33 @@ async fn lenient_parsing_with_mixed_claude_events() {
     )
     .await;
     assert_eq!(result.decision, HookDecision::Allow);
+}
+
+/// 本地 fork 约定: PreToolUse hook 超时也必须 fail-open, 不得阻塞工具调用.
+#[tokio::test]
+async fn hook_fail_open_on_timeout() {
+    let dir = tempfile::tempdir().unwrap();
+    write_hook(
+        dir.path(),
+        "slow.json",
+        r#"{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"sleep 10","timeout":1}]}]}}"#,
+    );
+
+    let (registry, errors) = load_hooks(Some(dir.path()), None);
+    assert!(errors.is_empty(), "errors: {errors:?}");
+
+    let ctx = RunContext {
+        session_id: "test",
+        workspace_root: dir.path().to_str().unwrap(),
+        process_scope: None,
+        disabled: Default::default(),
+    };
+    let pre_result =
+        dispatcher::dispatch_pre_tool_use(&registry, &pre_tool_use_envelope("read_file"), &ctx)
+            .await;
+    assert_eq!(
+        pre_result.decision,
+        HookDecision::Allow,
+        "fail-open: a timing-out hook must not block the tool call"
+    );
 }
