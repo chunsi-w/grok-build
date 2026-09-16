@@ -1,3 +1,20 @@
+# 1.25.0 - 2026-09-16
+
+## Features
+
+- **同步上游 monorepo 1.0.32** (`SOURCE_REV` be7ce6e8, 上游锁步号 1.0.24 -> 1.0.32): telemetry 模块重构为 logs/process/session/spans 分层, 分页器 settings 与 overlay 清理, 计划保留/评审门 (PlanKept / PlanCleared), 记忆删除与 v2 dream 生成, MCP 工具结果 structuredContent 透出与调用结局记录, 子代理行与工具审批门类型化, workspace daemon 停止原因类型化, 图片随用户消息发送, 会话扫除与技能读取上限.
+- 本地设计保留不变: 关自动更新 / 启动 UI 精简 (`local_ui`) / soft-warn + hookify / HookAnnotation 红字 / language / Tasks 面板在 scrollback 下 prompt 上 / 标题左对齐 / 无 Sentry.
+
+## Fixes
+
+- 上游把 `AgentRebuildSpec::system_prompt_label` 改为 `build_agent` 入参, 本地只保留新增的 `language` 字段, 消除 use-of-moved-value.
+- 上游重新引入 `telemetry/src/sentry.rs` 与 `pub mod sentry`, 按本地策略删除该模块并去掉声明 (Cargo 依赖本地本就无).
+
+## Notes
+
+- 产品版本本地 1.x 次版本递增; 上游锁步号 1.0.32, SOURCE_REV 推进.
+- 本机 1.94.0 工具链 release 构建通过; agent prompt 模板 / hooks / pager-bin / pager local_ui 回归全过.
+
 # 1.24.0 - 2026-09-14
 
 ## Features
@@ -103,6 +120,133 @@
 - 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn+hookify / language / Tasks 面板位置 / 会话标题左对齐 / 无 Sentry / 明文提示词.
 - 产品版本 1.21.0; 上游锁步号 1.0.13.
 
+# 1.0.32 — 2026-09-14
+
+## Bug Fixes
+
+- **Plugin and skill listings** from x.ai/plugins/list and x.ai/skills/* now reflect the latest config.toml even before the first session.
+- **Fixed crashes** on the first TLS handshake for Windows on ARM64 builds.
+- **Slash commands** like `/feedback` typed during plan approval now execute correctly.
+
+
+# 1.0.31 — 2026-09-13
+
+## Bug Fixes
+
+- **Folded subagent groups** in scrollback now correctly label how many are still running versus completed.
+- **Dashboard search** and the resume picker now clearly indicate the active text field and restore list selection after search.
+- **Dock sections** no longer keep a selection highlight after you collapse them with a click.
+- **Worktree paths** no longer show an extra suffix in the header or dashboard.
+- **MCP tools** with long server prefixes are now kept instead of being silently dropped.
+- **Turn cancelled** banners now correctly name the cause instead of always saying "by user".
+- **Long paths** in headers are now always shortened to the last two components.
+
+
+# 1.0.30 — 2026-09-11
+
+## Features
+
+- **Session header** redesigned as a single row that carries the overlay context and a Dashboard button.
+
+## Bug Fixes
+
+- **Elapsed-time display** now rolls over into hours (for example `3h14m`) instead of stopping at 60 minutes.
+- **Dock Watchers and Loops rows** now show when the next run is due.
+- **Workflow status** now shows a clickable row in the dock.
+
+## Performance
+
+- **Fixed lag in tmux** panes by omitting per-frame synchronized-update wrappers.
+
+
+# 1.0.29 — 2026-09-11
+
+## Bug Fixes
+
+- **Tab navigation** in the pager now cycles cleanly among prompt, scrollback, and the entire dock instead of stopping at every dock section.
+- **Ctrl+G** now hides or shows the dock in the pager; focus returns to scrollback when hiding.
+- **Multiple concurrent `grok agent stdio`** processes against the same GROK_HOME no longer crash at startup.
+- **MCP server connections** no longer fail against modern 2026-07-28 servers.
+- **Fixed startup crash** on Windows when the Client-ProjFS optional feature is disabled.
+
+## Performance
+
+- **Agent dashboard** no longer wastes CPU repainting identical frames when only idle spinners or hidden rows are present.
+
+
+# 1.0.28 — 2026-09-10
+
+## Features
+
+- **`/btw` now works mid-message**: the rest of the line becomes the side question and does not appear in the main transcript.
+- **Per-model `reasoning_summary`** setting is now available in config.toml for Responses API endpoints.
+
+## Bug Fixes
+
+- **Auto-update** no longer removes a grok binary that is still in use by another process.
+- **Prompt editor** no longer gets the cursor stuck or skips a row when pressing Up/Down across soft-wrapped lines.
+
+
+# 1.0.27 — 2026-09-10
+
+## Bug Fixes
+
+- **Queued messages** no longer appear twice when sent immediately.
+- **Dashboard spinners** no longer freeze when background tasks are running.
+
+
+# 1.0.26 — 2026-09-09
+
+## Features
+
+- **Interject messages** to subagents now interrupt long-running background waits so the message arrives immediately.
+- **Subagent message rows** in scrollback now indicate whether a message was sent as interject, queued, or steer.
+- **Feedback form** is now available directly in minimal mode without switching to fullscreen.
+
+## Bug Fixes
+
+- **`/btw` side questions** now include attached images from the composer.
+- **Background task reminders** no longer echo the original shell command.
+- **Failed background tasks** no longer produce duplicate reminders after the model reads their output.
+- **TPM rate-limit errors** during compaction are now retried instead of treated as context overflow.
+- **Ctrl+C** early in a turn now correctly rewinds the prompt without races.
+- **Dashboard arrow keys** now navigate the actions row from an empty input box.
+- **MCP tool calls** on legacy servers now correctly advertise elicitation support.
+- **Memory v2** now recovers from init failures and avoids stalled capture after repeated errors.
+
+
+# 1.0.25 — 2026-09-09
+
+## Features
+
+- **Background task list** is now sent as a durable snapshot so clients can restore state after reconnect.
+- **Hook runs** that succeed are now silent; only blocking or failing hooks show status or a single line.
+- **Vim-mode Shift+J/K** now jump to the next or previous turn at the top of the viewport, matching the timeline arrows.
+- **Double-click** now selects a radio button in settings choosers.
+- **Dashboard actions row** (+ New Agent, Open Previous, Worktree) can now be navigated with arrow keys and activated with Enter.
+- **Workflow tool** now supports pause and stop sources so agents can control background runs they launched.
+- **/theme** picker now matches aliases such as transparent, dark, or system and still inserts the canonical name.
+
+## Bug Fixes
+
+- **Bash command output** shown in the pager is now the complete result instead of a truncated tail.
+- **Voice dictation** now inserts text at the cursor instead of always appending to the end.
+- **Headless prompts** now time out cleanly instead of hanging forever when the agent does not respond.
+- **Scheduled tasks** now guide the agent to check results and clean up or update recurring schedules.
+- **Fixed duplicate user prompt rendering** in some ACP clients by making live echo opt-in.
+- **Fixed grok -c attaching the wrong empty session** after starting without --continue then resuming.
+- **Dock and queue hover colors** now match the rest of the terminal instead of using the stronger dropdown highlight.
+- **Fixed image upload errors** when reading Adobe SVGs that contain a PNG thumbnail prefix.
+- **Dock subagent rows** now show the same [stop] label as other killable rows.
+- **Fixed startup settings and model catalog** being shared or clobbered across concurrent boots or multiple accounts on the same machine.
+- **Dock Tasks panel** now shows the spinner aligned with the header instead of nested under a rule.
+- **/feedback <text>** now sends immediately again instead of starting a model turn; failures save to Drafts with a notice.
+
+## Performance
+
+- **Embedded launches** no longer time out while scanning the skills directory on slow filesystems.
+
+
 # 1.0.24 — 2026-09-07
 
 ## Bug Fixes
@@ -111,10 +255,6 @@
 
 
 # 1.0.23 — 2026-09-07
-
-## Features
-
-- **J/K** now jump between conversation turns using the same targeting as the timeline arrows, instead of snapping to assistant responses.
 
 ## Bug Fixes
 

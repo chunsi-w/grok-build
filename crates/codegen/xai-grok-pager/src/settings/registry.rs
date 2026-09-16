@@ -7,17 +7,8 @@ use xai_grok_shell::agent::config::UiConfig;
 use xai_grok_shell::util::config::DISPLAY_REFRESH_DEFAULT_AUTO_CADENCE_ENABLED;
 use xai_grok_tools::implementations::grok_build::ask_user_question;
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-/// Stable identity for a setting. The string id matches the `UiConfig`
-/// serde field name (for SHELL/SHARED settings) and is the canonical key
-/// referenced by tests, telemetry, and registry lookups.
-///
-/// We deliberately do NOT use a `SettingId` enum: enum renames would
-/// ripple through call sites, while `&'static str` ties the registry's
-/// vocabulary directly to the shell schema.
+/// Stable identity for a setting. We deliberately do NOT use a `SettingId` enum: enum renames would ripple through
+/// call sites.
 pub type SettingKey = &'static str;
 
 /// Ownership class for a setting — the pager vs. shell ownership taxonomy.
@@ -393,12 +384,8 @@ impl PagerLocalSnapshot {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Registry
-// ---------------------------------------------------------------------------
-
-/// Process-wide settings registry. Built in `main` and stored on
-/// `AppView::settings_registry: Arc<SettingsRegistry>`.
+/// Process-wide settings registry.
+/// Built in `main` and stored on `AppView::settings_registry: Arc<SettingsRegistry>`.
 #[derive(Debug, Clone)]
 pub struct SettingsRegistry {
     entries: Vec<SettingMeta>,
@@ -488,9 +475,7 @@ fn build_search_haystack(m: &SettingMeta) -> String {
     s
 }
 
-// ---------------------------------------------------------------------------
-// Snapshot reads — the one place that maps SettingKey → live field.
-// ---------------------------------------------------------------------------
+// Snapshot reads: the one place that maps a SettingKey to its live field
 
 /// Read the current value of `key` from `UiConfig` (SHELL/SHARED) or
 /// pager snapshot (PAGER-owned). Returns `None` for unknown keys.
@@ -741,10 +726,6 @@ pub fn default_value_for(meta: &SettingMeta) -> SettingValue {
         SettingKind::Group { .. } => SettingValue::Bool(false),
     }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -1605,7 +1586,7 @@ mod tests {
         let reg = SettingsRegistry::defaults();
         let hits = reg.search("compact density");
         assert_eq!(hits.len(), 1, "expected 1 match for 'compact density'");
-        assert_eq!(hits[0].key, "compact_mode");
+        assert_eq!(hits.first().map(|h| h.key), Some("compact_mode"));
 
         let empty = reg.search("xyzzy-no-match");
         assert!(empty.is_empty(), "expected no match for 'xyzzy-no-match'");
