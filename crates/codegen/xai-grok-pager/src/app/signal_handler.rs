@@ -7,11 +7,10 @@
 //! user sees a stale snapshot of the TUI that looks alive but is backed by a
 //! dead process.
 //!
-//! SIGINT / SIGTERM / SIGHUP are handled in a tokio task. The handler runs
-//! in normal Rust context (not actual signal-handler context), so it can use
-//! the full [`super::emit_terminal_teardown_sequences`] path
-//! (`with_locked_stderr`, conditional cursor-style reset, multiplexer flush) plus
-//! `disable_raw_mode`, then flush OpenTelemetry, then exit.
+//! SIGINT / SIGTERM / SIGHUP are handled in a tokio task.
+//! The handler runs in normal Rust context (not actual signal-handler context).
+//! It can therefore use the full [`crate::app::terminal_restore::emit_terminal_teardown_sequences`] path (locked stderr, conditional cursor-style reset, multiplexer flush).
+//! It then runs `disable_raw_mode`, flushes OpenTelemetry, and exits.
 //!
 //! SIGPIPE is intentionally left alone. The current disposition is `SIG_IGN`
 //! (Rust's stdlib default), which means writes to a closed pipe return
@@ -245,9 +244,8 @@ fn shutdown_with_terminal_restore(exit_code: i32) -> ! {
     } else {
         ScreenMode::Inline
     };
-    // Signal-path shutdown has no terminal handle, so fall back to the screen
-    // bottom for the final cursor position.
-    super::emit_terminal_teardown_sequences(mode, None);
+    // Signal-path shutdown has no terminal handle, so fall back to the screen bottom for the final cursor position.
+    crate::app::terminal_restore::emit_terminal_teardown_sequences(mode, None);
     let _ = crossterm::terminal::disable_raw_mode();
     // Mark after teardown so concurrent paths see TERMINAL_OWNED == true
     // until all escape sequences and tcsetattr have been written.

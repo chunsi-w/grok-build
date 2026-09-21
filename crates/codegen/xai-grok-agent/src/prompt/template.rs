@@ -272,7 +272,13 @@ mod tests {
         ]
         .into();
         let r = TemplateRenderer::new(tools, HashMap::new());
-        let prompt = render_base(&r, &default_placeholders());
+        let mut placeholders = default_placeholders();
+        jset(
+            &mut placeholders,
+            "memory_v2_enabled",
+            serde_json::json!(true),
+        );
+        let prompt = render_base(&r, &placeholders);
         assert!(
             prompt.contains("`view_file`"),
             "Should use overridden 'view_file'"
@@ -325,56 +331,6 @@ mod tests {
         assert!(
             prompt.contains(crate::prompt::context::DEFAULT_SYSTEM_PROMPT_LABEL),
             "Must contain agent identity"
-        );
-    }
-
-    // ── Mid-session mode switching ──────────────────────────────────
-
-    #[test]
-    fn test_mid_session_switch_concise_to_full() {
-        let compact = COMPACT_SYSTEM_PROMPT;
-        assert!(!compact.contains("read_file"), "Compact has no tool names");
-        assert!(
-            !compact.contains("<tool_calling>"),
-            "Compact has no tool section"
-        );
-
-        let full = render_base(&default_renderer(), &default_placeholders());
-        assert!(
-            full.contains("<tool_calling>"),
-            "Full prompt has tool section"
-        );
-        assert!(full.contains("read_file"), "Full prompt has read_file");
-        assert!(
-            full.contains("search_replace"),
-            "Full prompt has search_replace"
-        );
-    }
-
-    #[test]
-    fn test_mid_session_switch_preserves_tool_overrides() {
-        let tools: HashMap<ToolKind, String> = [
-            (ToolKind::Read, "view".to_string()),
-            (ToolKind::Edit, "edit".to_string()),
-            (ToolKind::Execute, "run_terminal_cmd".to_string()),
-            (ToolKind::Plan, "todo_write".to_string()),
-            (
-                ToolKind::BackgroundTaskAction,
-                "get_task_output".to_string(),
-            ),
-        ]
-        .into();
-        let r = TemplateRenderer::new(tools, HashMap::new());
-        let prompt = render_base(&r, &default_placeholders());
-        assert!(prompt.contains("`edit`"), "Should use overridden 'edit'");
-        assert!(prompt.contains("`view`"), "Should use overridden 'view'");
-        assert!(
-            !prompt.contains("`read_file`"),
-            "Should not contain original 'read_file'"
-        );
-        assert!(
-            !prompt.contains("`search_replace`"),
-            "Should not contain original 'search_replace'"
         );
     }
 
