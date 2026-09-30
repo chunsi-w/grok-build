@@ -1,3 +1,19 @@
+# 1.26.0 - 2026-09-30
+
+## Features
+
+- **同步上游 monorepo 1.0.45** (`SOURCE_REV` 559751fd, 上游锁步号 1.0.38 -> 1.0.45): 含此前未发版的 1.0.41 (远程控制与 Agent Host, 文件锁, 子代理模型继承, MCP SDK 3.4.0). 本批新增 permission-rules 独立 crate, 远端回合与隧道占用, 沙箱按目录归属 workspace daemon 并在出网前确认, 导入 Claude settings 与 requirements.toml 分段.
+- 本地设计保留不变: 关自动更新 / 启动 UI / soft-warn + hookify / HookAnnotation 红字 / language / Tasks 在 scrollback 下 / 标题左对齐 / 无 Sentry / 明文提示词.
+
+## Fixes
+
+- 上游再次声明 `pub mod sentry` 并加入 `tests/crash_envelope.rs`. 本地不接入 Sentry, 去掉模块声明并删除该测试.
+
+## Notes
+
+- 产品版本 1.25.0 -> 1.26.0. 上游锁步号 1.0.45, SOURCE_REV 推进到 559751fd.
+- 本机 aarch64-apple-darwin release 构建通过.
+
 # 1.25.0 - 2026-09-16
 
 ## Features
@@ -119,6 +135,119 @@
 
 - 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn+hookify / language / Tasks 面板位置 / 会话标题左对齐 / 无 Sentry / 明文提示词.
 - 产品版本 1.21.0; 上游锁步号 1.0.13.
+
+# 1.0.45 — 2026-09-29
+
+## Features
+
+- **Custom agents** from plugins or your config can now be chosen directly with spawn_subagent.
+- **MCP servers** can now use a token file that is re-read on every request so rotating credentials stay fresh.
+- **Models can now show** a colored notice banner above the prompt while selected.
+
+## Bug Fixes
+
+- **Subagent wait status** now correctly shows "Waiting for N subagents…" when the parent turn is blocked.
+
+
+# 1.0.44 — 2026-09-28
+
+## Features
+
+- **Sandbox enforcement** on macOS now uses the system Seatbelt (`sandbox-exec`) backend.
+- **Models can now advertise multiple context window sizes**; the first listed value is the default.
+- **New `/context-window` slash command** lets you pick a context window size for the current session when the model offers choices.
+- **`/model` selection now offers context window choices** (when the model supports them) before the effort level.
+
+## Bug Fixes
+
+- **Plan comments** can now be deleted by clicking the [✗] button that appears on hover.
+- **Shortcuts panel search** now finds entries when you type any of the words in the label, keys, description or help text.
+- **Fixed crashes** when pasting on Windows caused by overlapping clipboard operations.
+
+## Performance
+
+- **Parallel tool calls** that edit the same file now run safely in sequence; unrelated tools stay concurrent.
+
+
+# 1.0.43 — 2026-09-27
+
+## Bug Fixes
+
+- **MCP tool prompts** now appear correctly in minimal mode and users are notified when a prompt goes unanswered.
+
+
+# 1.0.42 — 2026-09-26
+
+## Features
+
+- Footer and `/usage` now display the model actually served on smart-auto turns.
+- **New `grok worktree create` command** creates a managed worktree without launching an interactive session.
+- **Auto permission mode** now appears as Auto-review everywhere in the UI.
+
+## Bug Fixes
+
+- **Bracketed pastes** that did not come from the clipboard no longer attach leftover images (e.g. from IME commits).
+- `grok -p` now exits cleanly with the documented code when interrupted and performs session cleanup instead of being killed.
+- Pressing Ctrl+C twice while writing a plan comment now cancels the comment instead of getting stuck.
+- **`grok --minimal`** now reprints history correctly after terminal resize and keeps the prompt/status rows anchored.
+- **Restoring a stashed draft** now places the cursor at the end so continued typing appends correctly.
+- **`grok update`** on WinGet installs now prints the `winget upgrade` command and exits without writing files.
+- Inline images are re-uploaded after a full repaint so they no longer appear blank in terminals that drop image data on ESC[2J.
+- Plugin hooks now run on a fresh session without requiring an explicit reload.
+- **Fixed plugin auto-update detection** when marketplace URLs differ only by .git suffix or host case.
+
+
+# 1.0.41 — 2026-09-22
+
+## Features
+
+- **Subagent model inheritance** setting added to /settings; persists in config.toml and respects managed/overlay layers.
+- **Per-model request size limits** can now be configured to match provider HTTP body caps and control inline image eviction.
+
+## Bug Fixes
+
+- **Fixed** the subagent fullscreen view so it no longer shows a stray [Dashboard] button in the header.
+- **Fixed** agent frontmatter `mcpServers` so that headers and URLs from the active agent's agent.md now correctly override config.toml and survive config reloads or agent switches.
+- **Ctrl+P** now opens the command palette immediately from the welcome screen.
+- **Dashboard** now focuses the "+ New Agent" row instead of leaving the previous session selected.
+- Sessions that were interrupted by a crash now show a clear marker instead of silently dropping the turn.
+- **Ctrl+Z** right after stashing a prompt now restores it.
+- **Collapsed edit blocks** setting now correctly collapses edits even if `expanded_by_default` was pinned true.
+- Interjections now receive a visible reply before the agent resumes prior tasks.
+- Canceling a turn that blocked on spawn_subagent now tells the model the child moved to the background instead of claiming it was never executed.
+- Saving a queued-prompt edit now returns focus to the composer so the next keys type the next message.
+- Subagent activation is now consistent between the TUI and `grok agent stdio`; tables that only set limits or models no longer disable subagents.
+- **Effort level selection** now accepts menu labels in addition to IDs.
+
+
+# 1.0.40 — 2026-09-20
+
+## Bug Fixes
+
+- **Miscellaneous bug fixes and updates**.
+
+
+# 1.0.39 — 2026-09-20
+
+## Features
+
+- **Subagents** can always use the parent model, with that choice locked in when the session starts.
+- Earlier image attachments now survive multiple compactions via a persisted path list.
+- **Subagent spawning** no longer requires choosing a type; omitted calls default to general-purpose.
+- The agent now keeps helper scripts, logs, and PR drafts in the system temp directory instead of the repository.
+- read_file descriptions now tell the model when offset/limit are ignored for SKILL.md and instruction files.
+- Effort levels for models now come from the API instead of hard-coded lists, and config aliases inherit the menu.
+- MCP tools that receive the wrong JSON shape are now automatically fixed when the mismatch is unambiguous.
+
+## Bug Fixes
+
+- Local worktree capture no longer refuses repositories that contain uninitialized submodules.
+- **Memory captures** no longer include opaque model reasoning blobs.
+- Idle timeouts now show a clear message instead of raw internal text.
+- Images attached to the last user prompt now survive compaction.
+- **Custom agent profiles** now persist correctly across session resume and reload.
+- **Subagent labels** now appear as "Subagent" instead of "General" in transcripts and the tasks pane.
+
 
 # 1.0.38 — 2026-09-19
 

@@ -13,7 +13,9 @@
 | `origin` | `phpmac/grok-build` | 本仓 main / tag / Release |
 | `upstream` | `xai-org/grok-build` | 官方 monorepo 同步源 |
 
-规范锚点: 根目录 `Claude.md` (本地设计保留表 + 禁止本机 cargo). 本 SOP 是可执行清单.
+规范锚点: 根目录 `Claude.md` 仍是设计保留表. 合并后的构建和发版以 `.grok/rules/merge-local-release.md` 为准.
+
+下文里 "禁止本机 cargo", "发现 dist tar.gz 立刻删", "等 CI 出三平台包", "默认走 PR" 作废. 冲突解法和设计保留表仍然有效.
 
 ---
 
