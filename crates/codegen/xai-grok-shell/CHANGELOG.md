@@ -1,13 +1,18 @@
-# Unreleased
+# 1.26.0 - 2026-09-30
 
 ## Features
 
-- **同步上游 monorepo 1.0.41** (`SOURCE_REV` 036a5d83, 上游锁步号 1.0.38 -> 1.0.41): 远程控制与 Agent Host, 文件锁, 子代理模型继承, 按模型请求体上限, MCP SDK 3.4.0, headless 信号处理. 要点见下方上游 1.0.39 到 1.0.41 段. 产品版本保持 1.25.0.
-- 本地设计保留不变: 关自动更新 / 启动 UI / soft-warn + hookify / HookAnnotation 红字 / language / Tasks 在 scrollback 下 / 标题左对齐 / 无 Sentry / 明文提示词. 上游 `<communication>` 未接回.
+- **同步上游 monorepo 1.0.45** (`SOURCE_REV` 559751fd, 上游锁步号 1.0.38 -> 1.0.45): 含此前未发版的 1.0.41 (远程控制与 Agent Host, 文件锁, 子代理模型继承, MCP SDK 3.4.0). 本批新增 permission-rules 独立 crate, 远端回合与隧道占用, 沙箱按目录归属 workspace daemon 并在出网前确认, 导入 Claude settings 与 requirements.toml 分段.
+- 本地设计保留不变: 关自动更新 / 启动 UI / soft-warn + hookify / HookAnnotation 红字 / language / Tasks 在 scrollback 下 / 标题左对齐 / 无 Sentry / 明文提示词.
+
+## Fixes
+
+- 上游再次声明 `pub mod sentry` 并加入 `tests/crash_envelope.rs`. 本地不接入 Sentry, 去掉模块声明并删除该测试.
 
 ## Notes
 
-- 未打 tag, 未推远程.
+- 产品版本 1.25.0 -> 1.26.0. 上游锁步号 1.0.45, SOURCE_REV 推进到 559751fd.
+- 本机 aarch64-apple-darwin release 构建通过.
 
 # 1.25.0 - 2026-09-16
 
@@ -130,6 +135,67 @@
 
 - 本地设计保留不变: 关自动更新 / 启动 UI 精简 / soft-warn+hookify / language / Tasks 面板位置 / 会话标题左对齐 / 无 Sentry / 明文提示词.
 - 产品版本 1.21.0; 上游锁步号 1.0.13.
+
+# 1.0.45 — 2026-09-29
+
+## Features
+
+- **Custom agents** from plugins or your config can now be chosen directly with spawn_subagent.
+- **MCP servers** can now use a token file that is re-read on every request so rotating credentials stay fresh.
+- **Models can now show** a colored notice banner above the prompt while selected.
+
+## Bug Fixes
+
+- **Subagent wait status** now correctly shows "Waiting for N subagents…" when the parent turn is blocked.
+
+
+# 1.0.44 — 2026-09-28
+
+## Features
+
+- **Sandbox enforcement** on macOS now uses the system Seatbelt (`sandbox-exec`) backend.
+- **Models can now advertise multiple context window sizes**; the first listed value is the default.
+- **New `/context-window` slash command** lets you pick a context window size for the current session when the model offers choices.
+- **`/model` selection now offers context window choices** (when the model supports them) before the effort level.
+
+## Bug Fixes
+
+- **Plan comments** can now be deleted by clicking the [✗] button that appears on hover.
+- **Shortcuts panel search** now finds entries when you type any of the words in the label, keys, description or help text.
+- **Fixed crashes** when pasting on Windows caused by overlapping clipboard operations.
+
+## Performance
+
+- **Parallel tool calls** that edit the same file now run safely in sequence; unrelated tools stay concurrent.
+
+
+# 1.0.43 — 2026-09-27
+
+## Bug Fixes
+
+- **MCP tool prompts** now appear correctly in minimal mode and users are notified when a prompt goes unanswered.
+
+
+# 1.0.42 — 2026-09-26
+
+## Features
+
+- Footer and `/usage` now display the model actually served on smart-auto turns.
+- **New `grok worktree create` command** creates a managed worktree without launching an interactive session.
+- **Auto permission mode** now appears as Auto-review everywhere in the UI.
+
+## Bug Fixes
+
+- **Bracketed pastes** that did not come from the clipboard no longer attach leftover images (e.g. from IME commits).
+- `grok -p` now exits cleanly with the documented code when interrupted and performs session cleanup instead of being killed.
+- Pressing Ctrl+C twice while writing a plan comment now cancels the comment instead of getting stuck.
+- **`grok --minimal`** now reprints history correctly after terminal resize and keeps the prompt/status rows anchored.
+- **Restoring a stashed draft** now places the cursor at the end so continued typing appends correctly.
+- **`grok update`** on WinGet installs now prints the `winget upgrade` command and exits without writing files.
+- Inline images are re-uploaded after a full repaint so they no longer appear blank in terminals that drop image data on ESC[2J.
+- Plugin hooks now run on a fresh session without requiring an explicit reload.
+- **Fixed plugin auto-update detection** when marketplace URLs differ only by .git suffix or host case.
+
 
 # 1.0.41 — 2026-09-22
 
